@@ -1,5 +1,10 @@
+import sys
 import warnings
-from typing import Literal
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
 
 import numpy as np
 import scipy.sparse as sp  # type: ignore
