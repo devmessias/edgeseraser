@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "edgeseraser"
-version = "0.0.1"
+version = "0.1.0"
 description = "A short description of the project"
 authors = [
     "Bruno Messias <devmessias@gmail.com>",
@@ -31,6 +31,9 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.7.1, <4.0"
+numpy = "*"
+networkx = "*"
+scipy = "*"
 
 [tool.poetry.dev-dependencies]
 autoflake = "*"
@@ -67,28 +70,8 @@ src_paths = ["src", "tests"]
 target-version = ["py37", "py38", "py39"]
 include = '\.pyi?$'
 
-[tool.pytest.ini_options]
-addopts = """\
-    --cov edgeseraser \
-    --cov tests \
-    --cov-report term-missing \
-    --no-cov-on-fail \
-"""
-
-[tool.coverage.report]
-fail_under = 100
-exclude_lines = [
-    'if TYPE_CHECKING:',
-    'pragma: no cover'
-]
 
 [tool.mypy]
-disallow_any_unimported = true
-disallow_untyped_defs = true
+disallow_untyped_defs = false
 no_implicit_optional = true
-strict_equality = true
-warn_unused_ignores = true
-warn_redundant_casts = true
-warn_return_any = true
-check_untyped_defs = true
-show_error_codes = true
+ignore_missing_imports = true
