@@ -29,21 +29,19 @@ def stick_break_scores(
     """
     Calculate the stick-breaking scores for each edge.
 
-    Parameters:
-    -----------
-    w_degree: np.array
-        edge weighted degree
-    degree: np.array
-        degree of each vertex
-    edges: np.array
-        edges of the graph
-    weights: np.array
-        edge weights
+    Args:
+        w_degree: np.array
+            edge weighted degree
+        degree: np.array
+            degree of each vertex
+        edges: np.array
+            edges of the graph
+        weights: np.array
+            edge weights
 
     Returns:
-    --------
-    alphas: np.array
-        stick-breaking scores for each edge
+        alphas: np.array
+            stick-breaking scores for each edge
     """
 
     st = w_degree[edges[:, 0]]
@@ -68,38 +66,39 @@ def stick_break_scores(
 
 def cond_stick_edges2erase(alphas: np.ndarray, thresh: float = 0.1) -> np.ndarray:
     """
-    Parameters:
-    -----------
-    alphas: np.array
-        edge scores
-    thresh: float
-        Between 0 and 1.
+    Args:
+        alphas: np.array
+            edge scores
+        thresh: float
+            Between 0 and 1.
+    Returns:
+        ids2erase: np.array
+            indices of edges to be erased
+
     """
     ids2erase = np.argwhere(alphas > thresh).flatten()
     return ids2erase
 
 
-def stick_break_scores_generic(
+def filter_generic_graph(
     num_vertices: int,
     edges: np.ndarray,
     weights: np.ndarray,
     cond: Literal["or", "both", "out", "in"] = "or",
 ) -> np.ndarray:
     """
-    Parameters
-    ----------
-    num_vertices: int
-        number ofvertices
-    edges: np.array
-        edges
-    weights: np.array
-        edge weights
-    cond: str
-        "out", "in", "both", "or"
+    Args:
+        num_vertices: int
+            number ofvertices
+        edges: np.array
+            edges
+        weights: np.array
+            edge weights
+        cond: str
+            "out", "in", "both", "or"
+    Returns:
+        alphas: np.array
 
-    Returns
-    -------
-    alphas: np.array
     """
     w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
     adj = sp.csr_matrix(
@@ -135,14 +134,13 @@ def filter_nx_graph(
     """Filter edges from a networkx graph using the disparity filter.
     (Dirichet proccess)
 
-    Parameters
-    ----------
-    g: networkx.Graph
-        graph to be filtered
-    thresh: float
-        Between 0 and 1.
-    cond: str
-        "out", "in", "both", "or"
+    Parameters:
+        g: networkx.Graph
+            graph to be filtered
+        thresh: float
+            Between 0 and 1.
+        cond: str
+            "out", "in", "both", "or"
 
     """
     assert thresh > 0.0 and thresh < 1.0, "thresh must be between 0 and 1"
@@ -156,6 +154,6 @@ def filter_nx_graph(
     weights = edges[:, 2].astype(np.float64)
     edges = edges[:, :2].astype(np.int64)
 
-    alphas = stick_break_scores_generic(num_vertices, edges, weights, cond=cond)
+    alphas = filter_generic_graph(num_vertices, edges, weights, cond=cond)
     ids2erase = cond_stick_edges2erase(alphas, thresh=thresh)
     g.remove_edges_from([(e[0], e[1]) for e in edges[ids2erase]])

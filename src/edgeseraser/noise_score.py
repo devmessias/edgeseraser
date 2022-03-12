@@ -15,23 +15,21 @@ def get_noise_score(
     """
     Get noise score for each edge
 
-    Parameters:
-    -----------
-    st_u: np.array
-        strength for each vertex
-    st_v: np.array
-        strength for each vertex
-    vol: float
-        volume of the graph
-    w: np.array
-        edge weights
+    Args:
+        st_u: np.array
+            strength for each vertex
+        st_v: np.array
+            strength for each vertex
+        vol: float
+            volume of the graph
+        w: np.array
+            edge weights
 
     Returns:
-    --------
-    scores_uv: np.array
-        noise score for each edge
-    std_uv: np.array
-        standard deviation of noise score for each edge
+        scores_uv: np.array
+            noise score for each edge
+        std_uv: np.array
+            standard deviation of noise score for each edge
 
     """
     st_prod_uv = np.multiply(st_u, st_v)
@@ -66,26 +64,25 @@ def get_noise_score(
     return score, sdev_cuv
 
 
-def noise_scores_generic(
+def filter_generic_graph(
     w_degree: np.ndarray, edges: np.ndarray, weights: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Compute noise corrected edge weights for a sparse graph.
 
-    Parameters
-    ----------
-    w_degree: np.ndarray
-        Weight degree of each vertex.
-    edges: np.array
-        Edges of the graph.
-    weights: np.array
-        Edge weights of the graph.
+    Args:
+        w_degree: np.ndarray
+            Weight degree of each vertex.
+        edges: np.array
+            Edges of the graph.
+        weights: np.array
+            Edge weights of the graph.
 
-    Returns
-    -------
-    scores_uv: np.array
-        Noise corrected edge weights.
-    std_uv: np.array
-        Standard deviation of noise corrected edge weights.
+    Returns:
+        scores_uv: np.array
+            Noise corrected edge weights.
+        std_uv: np.array
+            Standard deviation of noise corrected edge weights.
+
     """
 
     vol = w_degree.sum()
@@ -107,21 +104,19 @@ def cond_noise_edges2erase(
 ) -> np.ndarray:
     """Filter edges with high noise score.
 
-    Parameters:
-    -----------
-    scores_uv: np.array
-        edge scores
-    std_uv: np.array
-        edge standard deviations
-    thresh: float
-        >Since this is roughly equivalent to a one-tailed test of
-        statistical significance, common values of δ are 1.28, 1.64, and
-        2.32, which approximate p-values of 0.1, 0.05, and 0.0
+    Args:
+        scores_uv: np.array
+            edge scores
+        std_uv: np.array
+            edge standard deviations
+        thresh: float
+            >Since this is roughly equivalent to a one-tailed test of
+            statistical significance, common values of δ are 1.28, 1.64, and
+            2.32, which approximate p-values of 0.1, 0.05, and 0.0
 
     Returns:
-    --------
-    ids2erase: np.array
-        indices of edges to be erased
+        ids2erase: np.array
+            indices of edges to be erased
     """
     ids2erase = np.argwhere(scores_uv <= thresh * std_uv).flatten()
     return ids2erase
@@ -130,16 +125,15 @@ def cond_noise_edges2erase(
 def filter_nx_graph(g, thresh: float = 1.28, field: str = "weight") -> None:
     """Filter edge with high noise score from a networkx graph.
 
-    Parameters:
-    -----------
-    g: networkx.Graph
-        Graph to be filtered.
-    thresh: float
-        >Since this is roughly equivalent to a one-tailed test of
-        statistical significance, common values of δ are 1.28, 1.64, and
-        2.32, which approximate p-values of 0.1, 0.05, and 0.0
-    field: str
-        Edge field to be used for filtering.
+    Args:
+        g: networkx.Graph
+            Graph to be filtered.
+        thresh: float
+            >Since this is roughly equivalent to a one-tailed test of
+            statistical significance, common values of δ are 1.28, 1.64, and
+            2.32, which approximate p-values of 0.1, 0.05, and 0.0
+        field: str
+            Edge field to be used for filtering.
 
     """
 
@@ -152,7 +146,7 @@ def filter_nx_graph(g, thresh: float = 1.28, field: str = "weight") -> None:
     weights = edges[:, 2].astype(np.float64)
     edges = edges[:, :2].astype(np.int64)
 
-    scores_uv, std_uv = noise_scores_generic(w_degree, edges, weights)
+    scores_uv, std_uv = filter_generic_graph(w_degree, edges, weights)
 
     ids2erase = cond_noise_edges2erase(scores_uv, std_uv, thresh=thresh)
     g.remove_edges_from([(e[0], e[1]) for e in edges[ids2erase]])
