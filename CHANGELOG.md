@@ -5,7 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 
 ## [Unreleased]
+### Added
+-  Support for named vertex labels
 
+### Changed
+-  Organized the edges and weight extraction code using DRY principles
 ## [0.3.0] - 2022-03-13
 ### Added
 - Python iGraph lib support

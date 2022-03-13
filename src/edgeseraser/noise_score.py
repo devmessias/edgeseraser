@@ -1,9 +1,10 @@
 import warnings
 from typing import Tuple, TypeVar
 
-import networkx as nx  # type: ignore
 import numpy as np
 import scipy.sparse as sp  # type: ignore
+
+from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
 
 warnings.simplefilter("ignore", FutureWarning)
 
@@ -125,7 +126,9 @@ def cond_noise_edges2erase(
     return ids2erase
 
 
-def filter_nx_graph(g, thresh: float = 1.28, field: str = "weight") -> None:
+def filter_nx_graph(
+    g, thresh: float = 1.28, field: str = "weight", remap_labels=False
+) -> None:
     """Filter edge with high noise score from a networkx graph.
 
     Args:
@@ -137,6 +140,8 @@ def filter_nx_graph(g, thresh: float = 1.28, field: str = "weight") -> None:
             2.32, which approximate p-values of 0.1, 0.05, and 0.0
         field: str
             Edge field to be used for filtering.
+        remap_labels: bool (default: False)
+            If True, the labels of the graph will be remapped to consecutive
 
     Example:
         ```python
@@ -150,20 +155,13 @@ def filter_nx_graph(g, thresh: float = 1.28, field: str = "weight") -> None:
         ```
 
     """
-
-    w_adj = nx.adjacency_matrix(g)
+    edges, weights, num_vertices, nodelabel2index = nx_extract(g, remap_labels, field)
+    w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
     w_degree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
-    if field is None:
-        edges = np.array([[u, v, 1.0] for u, v in g.edges()])
-    else:
-        edges = np.array([[u, v, d[field]] for u, v, d in g.edges(data=True)])
-    weights = edges[:, 2].astype(np.float64)
-    edges = edges[:, :2].astype(np.int64)
-
     scores_uv, std_uv = filter_generic_graph(w_degree, edges, weights)
 
     ids2erase = cond_noise_edges2erase(scores_uv, std_uv, thresh=thresh)
-    g.remove_edges_from([(e[0], e[1]) for e in edges[ids2erase]])
+    nx_erase(g, edges[ids2erase], nodelabel2index)
 
 
 def filter_ig_graph(g, thresh: float = 1.28, field: str = "weight") -> None:
@@ -191,17 +189,11 @@ def filter_ig_graph(g, thresh: float = 1.28, field: str = "weight") -> None:
         ```
 
     """
-    num_vertices = g.vcount()
-    edges = np.array(g.get_edgelist())
-    if field is None:
-        weights = np.ones(edges.shape[0])
-    else:
-        weights = np.array(g.es[field]).astype(np.float64)
-
+    edges, weights, num_vertices = ig_extract(g, field)
     w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
     w_degree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
 
     scores_uv, std_uv = filter_generic_graph(w_degree, edges, weights)
 
     ids2erase = cond_noise_edges2erase(scores_uv, std_uv, thresh=thresh)
-    g.delete_edges(ids2erase)
+    ig_erase(g, ids2erase)

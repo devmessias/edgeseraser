@@ -9,6 +9,8 @@ else:
 import numpy as np
 import scipy.sparse as sp  # type: ignore
 
+from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
+
 warnings.simplefilter("ignore", FutureWarning)
 
 
@@ -131,6 +133,7 @@ def filter_nx_graph(
     thresh: float = 0.5,
     cond: Literal["or", "both", "out", "in"] = "or",
     field: str = "weight",
+    remap_labels: bool = False,
 ) -> None:
     """Filter edges from a networkx graph using the disparity filter.
     (Dirichet proccess)
@@ -145,19 +148,11 @@ def filter_nx_graph(
 
     """
     assert thresh > 0.0 and thresh < 1.0, "thresh must be between 0 and 1"
-
-    num_vertices = g.number_of_nodes()
-    if field is None:
-        edges = np.array([[u, v, 1.0] for u, v in g.edges()])
-    else:
-        edges = np.array([[u, v, d[field]] for u, v, d in g.edges(data=True)])
-
-    weights = edges[:, 2].astype(np.float64)
-    edges = edges[:, :2].astype(np.int64)
+    edges, weights, num_vertices, nodelabel2index = nx_extract(g, remap_labels, field)
 
     alphas = filter_generic_graph(num_vertices, edges, weights, cond=cond)
     ids2erase = cond_stick_edges2erase(alphas, thresh=thresh)
-    g.remove_edges_from([(e[0], e[1]) for e in edges[ids2erase]])
+    nx_erase(g, edges[ids2erase], nodelabel2index)
 
 
 def filter_ig_graph(
@@ -180,13 +175,8 @@ def filter_ig_graph(
     """
     assert thresh > 0.0 and thresh < 1.0, "thresh must be between 0 and 1"
 
-    num_vertices = g.vcount()
-    edges = np.array(g.get_edgelist())
-    if field is None:
-        weights = np.ones(edges.shape[0])
-    else:
-        weights = np.array(g.es[field]).astype(np.float64)
+    edges, weights, num_vertices = ig_extract(g, field)
 
     alphas = filter_generic_graph(num_vertices, edges, weights, cond=cond)
     ids2erase = cond_stick_edges2erase(alphas, thresh=thresh)
-    g.delete_edges(ids2erase)
+    ig_erase(g, ids2erase)

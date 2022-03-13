@@ -11,6 +11,10 @@ def test_nx_filter():
     bb = nx.edge_betweenness_centrality(g, normalized=False)
     nx.set_edge_attributes(g, bb, "betweenness")
     noise_score.filter_nx_graph(g, field="betweenness")
+    g = nx.Graph()
+    g.add_nodes_from([chr(i) for i in range(100)])
+    g.add_edges_from([(chr(i), chr(i + 1)) for i in range(99)])
+    noise_score.filter_nx_graph(g, field=None)
 
 
 def test_get_noise_score():
@@ -27,3 +31,9 @@ def test_ig_graph_filter():
     g.es["weight2"] = 1.0
     noise_score.filter_ig_graph(g, 0.1, field="weight2")
     assert ne_old > g.ecount()
+    g = ig.Graph()
+    for i in range(100):
+        g.add_vertex(name=chr(i))
+    for i in range(99):
+        g.add_edge(chr(i), chr(i + 1))
+    noise_score.filter_ig_graph(g, 0.1, field=None)
