@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "edgeseraser"
-version = "0.2.1"
+version = "0.3.0"
 description = "A short description of the project"
 authors = [
     "Bruno Messias <devmessias@gmail.com>",
