@@ -1,9 +1,10 @@
-"""This pkg aims to implement serveral filtering methods for (un)directed graphs.
+"""This pkg aims to implement serveral filtering methods for (un)directed
+graphs.
 
-Edge filtering methods allows to extract the backbone of a graph
-or sampling the most important ones. You can use these methods
-as a preprocessing step aiming to improve the performance/results of
-graph algorithms or to turn a graph visualtzation more asthetic.
+Edge filtering methods allows to extract the backbone of a graph or sampling the
+most important edges. You can use edge filtering methods as a preprocessing step
+aiming to improve the performance/results of graph algorithms or to turn a graph
+visualtzation more asthetic.
 
 **See the example below for a simple usage of the package.**
 ```python

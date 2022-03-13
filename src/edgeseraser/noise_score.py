@@ -26,9 +26,10 @@ def get_noise_score(
             edge weights
 
     Returns:
-        scores_uv: np.array
-            noise score for each edge
-        std_uv: np.array
+        (np.array, np.array):
+        -   **scores_uv**
+            Noise score for each edge.
+        -   **std_uv**
             standard deviation of noise score for each edge
 
     """
@@ -78,9 +79,10 @@ def filter_generic_graph(
             Edge weights of the graph.
 
     Returns:
-        scores_uv: np.array
+        (np.array, np.array):
+        -   **scores_uv**
             Noise corrected edge weights.
-        std_uv: np.array
+        -   **std_uv**
             Standard deviation of noise corrected edge weights.
 
     """
@@ -115,8 +117,8 @@ def cond_noise_edges2erase(
             2.32, which approximate p-values of 0.1, 0.05, and 0.0
 
     Returns:
-        ids2erase: np.array
-            indices of edges to be erased
+        np.array:
+        indices of edges to be erased
     """
     ids2erase = np.argwhere(scores_uv <= thresh * std_uv).flatten()
     return ids2erase
@@ -134,6 +136,17 @@ def filter_nx_graph(g, thresh: float = 1.28, field: str = "weight") -> None:
             2.32, which approximate p-values of 0.1, 0.05, and 0.0
         field: str
             Edge field to be used for filtering.
+
+    Example:
+        ```python
+        import networkx as nx
+        import edgeseraser as ee
+
+        g = nx.erdos_renyi_graph(100, 0.1)
+        ee.noise_score.filter_nx_graph(g, field=None)
+
+        g # filtered graph
+        ```
 
     """
 

@@ -40,8 +40,8 @@ def stick_break_scores(
             edge weights
 
     Returns:
-        alphas: np.array
-            stick-breaking scores for each edge
+        np.array:
+            **alphas** stick-breaking scores for each edge
     """
 
     st = w_degree[edges[:, 0]]
@@ -72,7 +72,7 @@ def cond_stick_edges2erase(alphas: np.ndarray, thresh: float = 0.1) -> np.ndarra
         thresh: float
             Between 0 and 1.
     Returns:
-        ids2erase: np.array
+        np.array:
             indices of edges to be erased
 
     """
@@ -97,7 +97,8 @@ def filter_generic_graph(
         cond: str
             "out", "in", "both", "or"
     Returns:
-        alphas: np.array
+        np.array:
+            **alphas** edge scores
 
     """
     w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
