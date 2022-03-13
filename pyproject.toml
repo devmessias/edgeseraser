@@ -35,6 +35,7 @@ numpy = "*"
 networkx = "*"
 scipy = "*"
 typing_extensions = "*"
+igraph= "*"
 
 [tool.poetry.dev-dependencies]
 autoflake = "*"

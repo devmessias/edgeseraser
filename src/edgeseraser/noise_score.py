@@ -3,6 +3,7 @@ from typing import Tuple, TypeVar
 
 import networkx as nx  # type: ignore
 import numpy as np
+import scipy.sparse as sp  # type: ignore
 
 warnings.simplefilter("ignore", FutureWarning)
 
@@ -163,3 +164,44 @@ def filter_nx_graph(g, thresh: float = 1.28, field: str = "weight") -> None:
 
     ids2erase = cond_noise_edges2erase(scores_uv, std_uv, thresh=thresh)
     g.remove_edges_from([(e[0], e[1]) for e in edges[ids2erase]])
+
+
+def filter_ig_graph(g, thresh: float = 1.28, field: str = "weight") -> None:
+    """Filter edge with high noise score from a igraph graph.
+
+    Args:
+        g: igraph.Graph
+            Graph to be filtered.
+        thresh: float
+            >Since this is roughly equivalent to a one-tailed test of
+            statistical significance, common values of δ are 1.28, 1.64, and
+            2.32, which approximate p-values of 0.1, 0.05, and 0.0
+        field: str
+            Edge field to be used for filtering.
+
+    Example:
+        ```python
+        import networkx as nx
+        import edgeseraser as ee
+
+        g = nx.erdos_renyi_graph(100, 0.1)
+        ee.noise_score.filter_nx_graph(g, field=None)
+
+        g # filtered graph
+        ```
+
+    """
+    num_vertices = g.vcount()
+    edges = np.array(g.get_edgelist())
+    if field is None:
+        weights = np.ones(edges.shape[0])
+    else:
+        weights = np.array(g.es[field]).astype(np.float64)
+
+    w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
+    w_degree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
+
+    scores_uv, std_uv = filter_generic_graph(w_degree, edges, weights)
+
+    ids2erase = cond_noise_edges2erase(scores_uv, std_uv, thresh=thresh)
+    g.delete_edges(ids2erase)

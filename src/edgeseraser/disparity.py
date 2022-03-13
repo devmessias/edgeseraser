@@ -158,3 +158,35 @@ def filter_nx_graph(
     alphas = filter_generic_graph(num_vertices, edges, weights, cond=cond)
     ids2erase = cond_stick_edges2erase(alphas, thresh=thresh)
     g.remove_edges_from([(e[0], e[1]) for e in edges[ids2erase]])
+
+
+def filter_ig_graph(
+    g,
+    thresh: float = 0.5,
+    cond: Literal["or", "both", "out", "in"] = "or",
+    field: str = "weight",
+) -> None:
+    """Filter edges from a igraph instance using the disparity filter.
+    (Dirichet proccess)
+
+    Parameters:
+        g: igraph.Graph
+            graph to be filtered
+        thresh: float
+            Between 0 and 1.
+        cond: str
+            "out", "in", "both", "or"
+
+    """
+    assert thresh > 0.0 and thresh < 1.0, "thresh must be between 0 and 1"
+
+    num_vertices = g.vcount()
+    edges = np.array(g.get_edgelist())
+    if field is None:
+        weights = np.ones(edges.shape[0])
+    else:
+        weights = np.array(g.es[field]).astype(np.float64)
+
+    alphas = filter_generic_graph(num_vertices, edges, weights, cond=cond)
+    ids2erase = cond_stick_edges2erase(alphas, thresh=thresh)
+    g.delete_edges(ids2erase)
