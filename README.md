@@ -3,6 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/edgeseraser?style=flat-square)](https://pypi.python.org/pypi/edgeseraser/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/edgeseraser?style=flat-square)](https://pypi.python.org/pypi/edgeseraser/)
 [![PyPI - License](https://img.shields.io/pypi/l/edgeseraser?style=flat-square)](https://pypi.python.org/pypi/edgeseraser/)
+
 [![Coookiecutter - Wolt](https://img.shields.io/badge/cookiecutter-Wolt-00c2e8?style=flat-square&logo=cookiecutter&logoColor=D4AA00&link=https://github.com/woltapp/wolt-python-package-cookiecutter)](https://github.com/woltapp/wolt-python-package-cookiecutter)
 
 
@@ -16,7 +17,37 @@
 
 ---
 
-A short description of the project
+## What is Edges Eraser?
+This pkg aims to implement serveral filtering methods for (un)directed graphs.
+
+Edge filtering methods allows to extract the backbone of a graph or sampling the most important edges. You can use edge filtering methods as a preprocessing step aiming to improve the performance/results of graph algorithms or to turn a graph visualtzation more asthetic.
+
+
+## Example
+```python
+import networkx as nx
+import edgeseraser as ee
+
+g = nx.erdos_renyi_graph(100, 0.1)
+ee.noise_score.filter_nx_graph(g, field=None)
+
+g # filtered graph
+```
+
+## Available methods and details
+
+| Method | Description | suitable for | limitations/restrictions/details |
+| --- | --- |--- | --- |
+| [Noise Score] | Filters edges with high noise score. Paper:[1]|Directed, Undirected, Weighted | Very good and fast! [4] |
+| [Disparity] | Dirichlet process filter (stick-breaking) Paper:[2] |  Directed, Undirected, Weighted |There are some criticism regarding the use in undirected graphs[3]|
+
+[1]: https://arxiv.org/abs/1701.07336
+[2]: https://arxiv.org/abs/0904.
+[3]: https://arxiv.org/abs/2101.00863
+[4]: https://www.michelecoscia.com/?p=1236
+[Noise Score]: /api_docs/#edgeseraser.noise_score
+[Disparity]: /api_docs/#edgeseraser.disparity
+
 
 ## Installation
 
@@ -26,26 +57,30 @@ pip install edgeseraser
 
 ## Development
 
-* Clone this repository
+* Clone/Fork this repository
+
+```sh
+git clone https://github.com/devmessias/edgeseraser
+```
+
 * Requirements:
   * [Poetry](https://python-poetry.org/)
   * Python 3.7+
-* Create a virtual environment and install the dependencies
 
 ```sh
-poetry install
-```
-
-* Activate the virtual environment
-
-```sh
-poetry shell
+make install
+make init
 ```
 
 ### Testing
 
 ```sh
-pytest
+make test
+```
+
+To run the static analysis, use the following command:
+```sh
+make mypy
 ```
 
 ### Documentation
@@ -54,39 +89,21 @@ The documentation is automatically generated from the content of the [docs direc
  of the public signatures of the source code. The documentation is updated and published as a [Github project page
  ](https://pages.github.com/) automatically as part each release.
 
-### Releasing
-
-Trigger the [Draft release workflow](https://github.com/devmessias/edgeseraser/actions/workflows/draft_release.yml)
-(press _Run workflow_). This will update the changelog & version and create a GitHub release which is in _Draft_ state.
-
-Find the draft release from the
-[GitHub releases](https://github.com/devmessias/edgeseraser/releases) and publish it. When
- a release is published, it'll trigger [release](https://github.com/devmessias/edgeseraser/blob/master/.github/workflows/release.yml) workflow which creates PyPI
- release and deploys updated documentation.
+To see the current state of the documentation in your browser, use the following command:
+```sh
+make docs-serve
+```
+The above command will start a local server on port 8000. Any changes to
+the documentation and docstrings will be automatically reflected in your browser.
 
 ### Pre-commit
 
 Pre-commit hooks run all the auto-formatters (e.g. `black`, `isort`), linters (e.g. `mypy`, `flake8`), and other quality
  checks to make sure the changeset is in good shape before a commit/push happens.
 
-You can install the hooks with (runs for each commit):
+
+If you want e.g. want to run all checks manually for all files:
 
 ```sh
-pre-commit install
+make pre-commit
 ```
-
-Or if you want them to run only for each push:
-
-```sh
-pre-commit install -t pre-push
-```
-
-Or if you want e.g. want to run all checks manually for all files:
-
-```sh
-pre-commit run --all-files
-```
-
----
-
-This project was generated using the [wolt-python-package-cookiecutter](https://github.com/woltapp/wolt-python-package-cookiecutter) template.
