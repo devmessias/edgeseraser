@@ -220,4 +220,4 @@ def filter_ig_graph(g, param: float = 1.28, field: Optional[str] = None) -> None
 
     ids2erase = filter_generic_graph(w_degree, edges, weights, param=param)
 
-    ig_erase(g, ids2erase, opts)
+    ig_erase(g, ids2erase)

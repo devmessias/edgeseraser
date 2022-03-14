@@ -15,7 +15,7 @@ def nx_extract(
 
     nodes = g.nodes()
     num_vertices = len(nodes)
-    opts = {}
+    opts = {"is_directed": is_directed}
     try:
         nodes[0]
     except KeyError:
@@ -46,7 +46,7 @@ def nx_erase(g, edges2erase, opts):
 def ig_extract(
     g,
     field: Optional[str] = None,
-) -> Tuple[np.ndarray, np.ndarray, int]:
+) -> Tuple[np.ndarray, np.ndarray, int, dict]:
     is_directed = g.is_directed()
     if is_directed:
         components = g.components(mode="weak")
@@ -55,7 +55,7 @@ def ig_extract(
         assert g.is_connected(), "Graph is not connected"
 
     num_vertices = g.vcount()
-    opts = {}
+    opts = {"is_directed": is_directed}
     edges = np.array(g.get_edgelist())
     assert edges.shape[0] > 0, "Graph is empty"
     if field is None:
@@ -65,5 +65,5 @@ def ig_extract(
     return edges, weights, num_vertices, opts
 
 
-def ig_erase(g, ids2erase, opts):
+def ig_erase(g, ids2erase):
     g.delete_edges(ids2erase)

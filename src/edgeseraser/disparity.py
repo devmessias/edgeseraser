@@ -176,4 +176,4 @@ def filter_ig_graph(
     ids2erase = filter_generic_graph(
         num_vertices, edges, weights, cond=cond, is_directed=is_directed, thresh=thresh
     )
-    ig_erase(g, ids2erase, opts)
+    ig_erase(g, ids2erase)
