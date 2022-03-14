@@ -6,7 +6,7 @@ from edgeseraser import noise_score
 
 
 def test_nx_filter():
-    g = nx.erdos_renyi_graph(100, 0.1)
+    g = nx.circulant_graph(10, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     noise_score.filter_nx_graph(g)
     bb = nx.edge_betweenness_centrality(g, normalized=False)
     nx.set_edge_attributes(g, bb, "betweenness")
@@ -18,19 +18,22 @@ def test_nx_filter():
 
 
 def test_get_noise_score():
-    noise_score.get_noise_score(
+    noise_score.noisy_scores(
         np.array([1, 2, 3]), np.array([1, 2, 3]), 10, np.array([1, 2, 3])
     )
 
 
 def test_ig_graph_filter():
-    g = ig.Graph.Erdos_Renyi(100, 0.5)
+    g = ig.Graph.Erdos_Renyi(100, 1, directed=False)
+    cl = g.clusters()
+    g = cl.giant()
     ne_old = g.ecount()
+    g2 = g.copy()
     noise_score.filter_ig_graph(g, 0.1)
     assert ne_old > g.ecount()
-    g.es["weight2"] = 1.0
-    noise_score.filter_ig_graph(g, 0.1, field="weight2")
-    assert ne_old > g.ecount()
+    g2.es["weight2"] = 1.0
+    noise_score.filter_ig_graph(g2, 0.1, field="weight2")
+    assert ne_old > g2.ecount()
     g = ig.Graph()
     for i in range(100):
         g.add_vertex(name=chr(i))

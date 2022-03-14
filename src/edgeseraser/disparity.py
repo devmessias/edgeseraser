@@ -8,9 +8,9 @@ else:
     from typing_extensions import Literal
 
 import numpy as np
-import scipy.sparse as sp  # type: ignore
 
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
+from edgeseraser.misc.matrix import construct_sp_matrices
 
 warnings.simplefilter("ignore", FutureWarning)
 
@@ -35,21 +35,11 @@ def stick_break_scores(
         np.array:
             **alphas** stick-breaking scores for each edge
     """
-
-    st = w_degree[edges[:, 0]]
-    degree = degree[edges[:, 0]]
-    w_degree = w_degree[edges[:, 0]]
-
-    ids_w0 = np.argwhere(st == 0)
-    ids_d1 = np.argwhere(degree < 2)
-    st[ids_w0] = 1
-    degree[ids_d1] = 10
-    st = weights / st
-    st[st == 1.0] -= 10e-4
-    alphas = (1 - st) ** (degree - 1)
-
-    alphas[ids_d1] = 0.0
-    alphas[ids_w0] = 0.0
+    alphas = np.ones(edges.shape[0])
+    ids_d1 = degree > 1
+    st = weights[ids_d1] / w_degree[ids_d1]
+    assert np.all(st <= 1)
+    alphas[ids_d1] = (1 - st) ** (degree[ids_d1] - 1)
     return alphas
 
 
@@ -65,15 +55,16 @@ def cond_edges2erase(alphas: np.ndarray, thresh: float = 0.1) -> np.ndarray:
             indices of edges to be erased
 
     """
-    ids2erase = np.argwhere(alphas > thresh).flatten()
+    ids2erase = np.argwhere(alphas < thresh).flatten()
     return ids2erase
 
 
-def filter_generic_graph(
+def scores_generic_graph(
     num_vertices: int,
     edges: np.ndarray,
     weights: np.ndarray,
     cond: Literal["or", "both", "out", "in"] = "or",
+    is_directed: bool = False,
 ) -> np.ndarray:
     """
     Args:
@@ -90,16 +81,16 @@ def filter_generic_graph(
             **alphas** edge scores
 
     """
-    w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
-    adj = sp.csr_matrix(
-        (np.ones(edges.shape[0]), edges.T), shape=(num_vertices, num_vertices)
+    w_adj, adj = construct_sp_matrices(
+        weights, edges, num_vertices, is_directed=is_directed
     )
-
     calc_degree = lambda x, i: np.asarray(x.sum(axis=i)).flatten().astype(np.float64)
-    w_degree_out = calc_degree(w_adj, 0)
-    degree_out = calc_degree(adj, 0)
-    w_degree_in = calc_degree(w_adj, 1)
-    degree_in = calc_degree(adj, 1)
+    iin = edges[:, 1]
+    iout = edges[:, 0]
+    w_degree_out = calc_degree(w_adj, 0)[iout]
+    degree_out = calc_degree(adj, 0)[iout]
+    w_degree_in = calc_degree(w_adj, 1)[iin]
+    degree_in = calc_degree(adj, 1)[iin]
     if cond == "out":
         alphas = stick_break_scores(w_degree_out, degree_out, edges, weights)
     elif cond == "in":
@@ -115,9 +106,26 @@ def filter_generic_graph(
     return alphas
 
 
+def filter_generic_graph(
+    num_vertices: int,
+    edges: np.ndarray,
+    weights: np.ndarray,
+    thresh: float = 0.8,
+    cond: Literal["or", "both", "out", "in"] = "or",
+    is_directed: bool = False,
+):
+
+    alphas = scores_generic_graph(
+        num_vertices, edges, weights, cond=cond, is_directed=is_directed
+    )
+
+    ids2erase = cond_edges2erase(alphas, thresh=thresh)
+    return ids2erase
+
+
 def filter_nx_graph(
     g,
-    thresh: float = 0.5,
+    thresh: float = 0.8,
     cond: Literal["or", "both", "out", "in"] = "or",
     field: Optional[str] = None,
     remap_labels: bool = False,
@@ -135,15 +143,17 @@ def filter_nx_graph(
 
     """
     assert thresh > 0.0 and thresh < 1.0, "thresh must be between 0 and 1"
-    edges, weights, num_vertices, nodelabel2index = nx_extract(g, remap_labels, field)
-    alphas = filter_generic_graph(num_vertices, edges, weights, cond=cond)
-    ids2erase = cond_edges2erase(alphas, thresh=thresh)
-    nx_erase(g, edges[ids2erase], nodelabel2index)
+    edges, weights, num_vertices, opts = nx_extract(g, remap_labels, field)
+    is_directed = g.is_directed()
+    ids2erase = filter_generic_graph(
+        num_vertices, edges, weights, cond=cond, is_directed=is_directed, thresh=thresh
+    )
+    nx_erase(g, edges[ids2erase], opts)
 
 
 def filter_ig_graph(
     g,
-    thresh: float = 0.5,
+    thresh: float = 0.8,
     cond: Literal["or", "both", "out", "in"] = "or",
     field: Optional[str] = None,
 ) -> None:
@@ -161,8 +171,9 @@ def filter_ig_graph(
     """
     assert thresh > 0.0 and thresh < 1.0, "thresh must be between 0 and 1"
 
-    edges, weights, num_vertices = ig_extract(g, field)
-
-    alphas = filter_generic_graph(num_vertices, edges, weights, cond=cond)
-    ids2erase = cond_edges2erase(alphas, thresh=thresh)
-    ig_erase(g, ids2erase)
+    edges, weights, num_vertices, opts = ig_extract(g, field)
+    is_directed = g.is_directed()
+    ids2erase = filter_generic_graph(
+        num_vertices, edges, weights, cond=cond, is_directed=is_directed, thresh=thresh
+    )
+    ig_erase(g, ids2erase, opts)

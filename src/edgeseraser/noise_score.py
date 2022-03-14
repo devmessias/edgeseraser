@@ -11,11 +11,34 @@ warnings.simplefilter("ignore", FutureWarning)
 NpOrFloat = TypeVar("NpOrFloat", np.ndarray, float)
 
 
-def get_noise_score(
+def cond_edges2erase(
+    scores_uv: np.ndarray, std_uv: np.ndarray, thresh: float = 1.28
+) -> np.ndarray:
+    """Filter edges with high noise score.
+
+    Args:
+        scores_uv: np.array
+            edge scores
+        std_uv: np.array
+            edge standard deviations
+        thresh: float
+            >Since this is roughly equivalent to a one-tailed test of
+            statistical significance, common values of δ are 1.28, 1.64, and
+            2.32, which approximate p-values of 0.1, 0.05, and 0.0
+
+    Returns:
+        np.array:
+        indices of edges to be erased
+    """
+    ids2erase = np.argwhere(scores_uv <= thresh * std_uv).flatten()
+    return ids2erase
+
+
+def noisy_scores(
     st_u: NpOrFloat, st_v: NpOrFloat, vol: float, w: NpOrFloat
 ) -> Tuple[NpOrFloat, NpOrFloat]:
     """
-    Get noise score for each edge
+    Get noise score and the std for each edge
 
     Args:
         st_u: np.array
@@ -67,7 +90,7 @@ def get_noise_score(
     return score, sdev_cuv
 
 
-def filter_generic_graph(
+def scores_generic_graph(
     w_degree: np.ndarray, edges: np.ndarray, weights: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Compute noise corrected edge weights for a sparse graph.
@@ -97,44 +120,47 @@ def filter_generic_graph(
     ids_0 = np.argwhere(scores == 0)
     st_u[ids_0] = 1
     st_v[ids_0] = 1
-    scores_uv, std_uv = get_noise_score(st_u, st_v, vol, weights)
+    scores_uv, std_uv = noisy_scores(st_u, st_v, vol, weights)
     scores_uv[ids_0] = 0
     std_uv[ids_0] = 0.0
     return scores_uv, std_uv
 
 
-def cond_edges2erase(
-    scores_uv: np.ndarray, std_uv: np.ndarray, thresh: float = 1.28
+def filter_generic_graph(
+    w_degree: np.ndarray, edges: np.ndarray, weights: np.ndarray, param: float = 1.28
 ) -> np.ndarray:
-    """Filter edges with high noise score.
+    """Compute noise corrected edge weights for a sparse graph.
 
     Args:
-        scores_uv: np.array
-            edge scores
-        std_uv: np.array
-            edge standard deviations
-        thresh: float
+        w_degree: np.ndarray
+            Weight degree of each vertex.
+        edges: np.array
+            Edges of the graph.
+        weights: np.array
+            Edge weights of the graph.
+        param: float
             >Since this is roughly equivalent to a one-tailed test of
             statistical significance, common values of δ are 1.28, 1.64, and
             2.32, which approximate p-values of 0.1, 0.05, and 0.0
 
     Returns:
-        np.array:
-        indices of edges to be erased
+        np.array
+
     """
-    ids2erase = np.argwhere(scores_uv <= thresh * std_uv).flatten()
+    scores_uv, std_uv = scores_generic_graph(w_degree, edges, weights)
+    ids2erase = cond_edges2erase(scores_uv, std_uv, thresh=param)
     return ids2erase
 
 
 def filter_nx_graph(
-    g, thresh: float = 1.28, field: Optional[str] = None, remap_labels=False
+    g, param: float = 1.28, field: Optional[str] = None, remap_labels=False
 ) -> None:
     """Filter edge with high noise score from a networkx graph.
 
     Args:
         g: networkx.Graph
             Graph to be filtered.
-        thresh: float
+        param: float
             >Since this is roughly equivalent to a one-tailed test of
             statistical significance, common values of δ are 1.28, 1.64, and
             2.32, which approximate p-values of 0.1, 0.05, and 0.0
@@ -149,28 +175,27 @@ def filter_nx_graph(
         import edgeseraser as ee
 
         g = nx.erdos_renyi_graph(100, 0.1)
-        ee.noise_score.filter_nx_graph(g, field=None)
+        ee.noise_score.filter_nx_graph(g)
 
         g # filtered graph
         ```
 
     """
-    edges, weights, num_vertices, nodelabel2index = nx_extract(g, remap_labels, field)
+    edges, weights, num_vertices, opts = nx_extract(g, remap_labels, field)
     w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
     w_degree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
-    scores_uv, std_uv = filter_generic_graph(w_degree, edges, weights)
+    ids2erase = filter_generic_graph(w_degree, edges, weights, param=param)
 
-    ids2erase = cond_edges2erase(scores_uv, std_uv, thresh=thresh)
-    nx_erase(g, edges[ids2erase], nodelabel2index)
+    nx_erase(g, edges[ids2erase], opts)
 
 
-def filter_ig_graph(g, thresh: float = 1.28, field: Optional[str] = None) -> None:
+def filter_ig_graph(g, param: float = 1.28, field: Optional[str] = None) -> None:
     """Filter edge with high noise score from a igraph graph.
 
     Args:
         g: igraph.Graph
             Graph to be filtered.
-        thresh: float
+        param: float
             >Since this is roughly equivalent to a one-tailed test of
             statistical significance, common values of δ are 1.28, 1.64, and
             2.32, which approximate p-values of 0.1, 0.05, and 0.0
@@ -189,11 +214,10 @@ def filter_ig_graph(g, thresh: float = 1.28, field: Optional[str] = None) -> Non
         ```
 
     """
-    edges, weights, num_vertices = ig_extract(g, field)
+    edges, weights, num_vertices, opts = ig_extract(g, field)
     w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
     w_degree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
 
-    scores_uv, std_uv = filter_generic_graph(w_degree, edges, weights)
+    ids2erase = filter_generic_graph(w_degree, edges, weights, param=param)
 
-    ids2erase = cond_edges2erase(scores_uv, std_uv, thresh=thresh)
-    ig_erase(g, ids2erase)
+    ig_erase(g, ids2erase, opts)
