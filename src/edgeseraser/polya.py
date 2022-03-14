@@ -11,15 +11,17 @@ from edgeseraser.misc.matrix import construct_sp_matrices
 warnings.simplefilter("ignore", FutureWarning)
 
 
-def compute_polya_pdf(w, n: int, k, a: float = 0.0, approx: bool = False):
+def compute_polya_pdf(
+    w: np.ndarray, n: np.ndarray, k, a: float = 0.0, approx: bool = False
+) -> np.ndarray:
     """
 
     Args:
         w: np.array
             edge weights
-        n: int
+        n: np.array
             number of samples
-        k: int
+        k: np.array
         a: float (default: 0)
         approx: bool (default: False)
             if True, use approximation
@@ -99,13 +101,13 @@ def polya_cdf(weights, w_degree, degree, a, apt_lvl, eps=1e-20):
 
 def scores_generic_graph(
     num_vertices: int,
-    edges,
-    weights,
+    edges: np.ndarray,
+    weights: np.ndarray,
     a: float = 1,
     apt_lvl: int = 10,
     is_directed: bool = False,
     eps: float = 1e-20,
-):
+) -> np.ndarray:
     w_adj, adj = construct_sp_matrices(
         weights, edges, num_vertices, is_directed=is_directed
     )
@@ -145,14 +147,14 @@ def cond_edges2erase(alphas: np.ndarray, thresh: float = 0.1) -> np.ndarray:
 
 def filter_generic_graph(
     num_vertices: int,
-    edges,
-    weights,
-    thresh=0.4,
+    edges: np.ndarray,
+    weights: np.ndarray,
+    thresh: float = 0.4,
     a: float = 1,
     apt_lvl: int = 10,
     is_directed: bool = False,
     eps: float = 1e-20,
-):
+) -> np.ndarray:
     p = scores_generic_graph(
         num_vertices,
         edges,
