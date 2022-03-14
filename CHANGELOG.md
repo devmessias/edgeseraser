@@ -6,7 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 ### Added
--  Support for named vertex labels
+- Support for named vertex labels
+- Pólya-Urn backbone filter
+- Check for disconnected graphs
 
 ### Changed
 -  Organized the edges and weight extraction code using DRY principles
