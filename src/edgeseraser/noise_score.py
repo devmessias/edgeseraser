@@ -1,5 +1,5 @@
 import warnings
-from typing import Tuple, TypeVar
+from typing import Optional, Tuple, TypeVar
 
 import numpy as np
 import scipy.sparse as sp  # type: ignore
@@ -103,7 +103,7 @@ def filter_generic_graph(
     return scores_uv, std_uv
 
 
-def cond_noise_edges2erase(
+def cond_edges2erase(
     scores_uv: np.ndarray, std_uv: np.ndarray, thresh: float = 1.28
 ) -> np.ndarray:
     """Filter edges with high noise score.
@@ -127,7 +127,7 @@ def cond_noise_edges2erase(
 
 
 def filter_nx_graph(
-    g, thresh: float = 1.28, field: str = "weight", remap_labels=False
+    g, thresh: float = 1.28, field: Optional[str] = None, remap_labels=False
 ) -> None:
     """Filter edge with high noise score from a networkx graph.
 
@@ -160,11 +160,11 @@ def filter_nx_graph(
     w_degree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
     scores_uv, std_uv = filter_generic_graph(w_degree, edges, weights)
 
-    ids2erase = cond_noise_edges2erase(scores_uv, std_uv, thresh=thresh)
+    ids2erase = cond_edges2erase(scores_uv, std_uv, thresh=thresh)
     nx_erase(g, edges[ids2erase], nodelabel2index)
 
 
-def filter_ig_graph(g, thresh: float = 1.28, field: str = "weight") -> None:
+def filter_ig_graph(g, thresh: float = 1.28, field: Optional[str] = None) -> None:
     """Filter edge with high noise score from a igraph graph.
 
     Args:
@@ -195,5 +195,5 @@ def filter_ig_graph(g, thresh: float = 1.28, field: str = "weight") -> None:
 
     scores_uv, std_uv = filter_generic_graph(w_degree, edges, weights)
 
-    ids2erase = cond_noise_edges2erase(scores_uv, std_uv, thresh=thresh)
+    ids2erase = cond_edges2erase(scores_uv, std_uv, thresh=thresh)
     ig_erase(g, ids2erase)

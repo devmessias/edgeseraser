@@ -1,11 +1,11 @@
-from typing import Tuple
+from typing import Optional, Tuple
 
 import networkx as nx
 import numpy as np
 
 
 def nx_extract(
-    g, remap_labels: bool = False, field: str = None
+    g, remap_labels: bool = False, field: Optional[str] = None
 ) -> Tuple[np.ndarray, np.ndarray, int, dict]:
     nodes = g.nodes()
     num_vertices = len(nodes)
@@ -39,7 +39,7 @@ def nx_erase(g, edges2erase, nodelabel2index):
 
 def ig_extract(
     g,
-    field: str = None,
+    field: Optional[str] = None,
 ) -> Tuple[np.ndarray, np.ndarray, int]:
     num_vertices = g.vcount()
 

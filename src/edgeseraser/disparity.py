@@ -1,5 +1,6 @@
 import sys
 import warnings
+from typing import Optional
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -12,17 +13,6 @@ import scipy.sparse as sp  # type: ignore
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
 
 warnings.simplefilter("ignore", FutureWarning)
-
-
-def get_disparity_integral(norm_weight, degree):
-    """
-    calculate the significance (alpha) for the disparity filter
-    """
-    disparity_integral = ((1.0 - norm_weight) ** degree) / (
-        (degree - 1.0) * (norm_weight - 1.0)
-    )
-
-    return disparity_integral
 
 
 def stick_break_scores(
@@ -56,17 +46,14 @@ def stick_break_scores(
     degree[ids_d1] = 10
     st = weights / st
     st[st == 1.0] -= 10e-4
-    alphas = 1.0 - (
-        (degree - 1.0)
-        * (get_disparity_integral(st, degree) - get_disparity_integral(0.0, degree))
-    )
+    alphas = (1 - st) ** (degree - 1)
 
     alphas[ids_d1] = 0.0
     alphas[ids_w0] = 0.0
     return alphas
 
 
-def cond_stick_edges2erase(alphas: np.ndarray, thresh: float = 0.1) -> np.ndarray:
+def cond_edges2erase(alphas: np.ndarray, thresh: float = 0.1) -> np.ndarray:
     """
     Args:
         alphas: np.array
@@ -132,7 +119,7 @@ def filter_nx_graph(
     g,
     thresh: float = 0.5,
     cond: Literal["or", "both", "out", "in"] = "or",
-    field: str = "weight",
+    field: Optional[str] = None,
     remap_labels: bool = False,
 ) -> None:
     """Filter edges from a networkx graph using the disparity filter.
@@ -149,9 +136,8 @@ def filter_nx_graph(
     """
     assert thresh > 0.0 and thresh < 1.0, "thresh must be between 0 and 1"
     edges, weights, num_vertices, nodelabel2index = nx_extract(g, remap_labels, field)
-
     alphas = filter_generic_graph(num_vertices, edges, weights, cond=cond)
-    ids2erase = cond_stick_edges2erase(alphas, thresh=thresh)
+    ids2erase = cond_edges2erase(alphas, thresh=thresh)
     nx_erase(g, edges[ids2erase], nodelabel2index)
 
 
@@ -159,7 +145,7 @@ def filter_ig_graph(
     g,
     thresh: float = 0.5,
     cond: Literal["or", "both", "out", "in"] = "or",
-    field: str = "weight",
+    field: Optional[str] = None,
 ) -> None:
     """Filter edges from a igraph instance using the disparity filter.
     (Dirichet proccess)
@@ -178,5 +164,5 @@ def filter_ig_graph(
     edges, weights, num_vertices = ig_extract(g, field)
 
     alphas = filter_generic_graph(num_vertices, edges, weights, cond=cond)
-    ids2erase = cond_stick_edges2erase(alphas, thresh=thresh)
+    ids2erase = cond_edges2erase(alphas, thresh=thresh)
     ig_erase(g, ids2erase)
