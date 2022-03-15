@@ -6,21 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.5.0] - 2022-03-15
 ### Added
--   Pólya-Urn method for integer weighted graphs now uses JIT compilation to
+- Pólya-Urn method for integer weighted graphs now uses JIT compilation to
     speed up the computation.
--   Tests for integer weighted graphs.
--   Makefile targets to build and install the package in a single command.
--   Fast math implementation for Beta-log and Gamma-log functions.
--   Tests for for fast math implementations.
+- Tests for integer weighted graphs.
+- Makefile targets to build and install the package in a single command.
+- Fast math implementation for Beta-log and Gamma-log functions.
+- Tests for for fast math implementations.
+
 ### Fixed
 - Disparity filter
 - Pólya-Urn methdo for integer weighted graphs
 - Tests
 
 ### Changed
--   Same variable name for weight, weighted degree, etc.
--   Folder structure.
+- Same variable name for weight, weighted degree, etc.
+- Folder structure.
+
 ## [0.4.1] - 2022-03-15
 ### Fixed
 - Docstrings
@@ -57,7 +60,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Disparity filter
 - Networkx integration
 
-[Unreleased]: https://github.com/devmessias/edgeseraser/compare/0.4.1...master
+[Unreleased]: https://github.com/devmessias/edgeseraser/compare/0.5.0...master
+[0.5.0]: https://github.com/devmessias/edgeseraser/compare/0.4.1...0.5.0
 [0.4.1]: https://github.com/devmessias/edgeseraser/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/devmessias/edgeseraser/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/devmessias/edgeseraser/compare/0.2.1...0.3.0
