@@ -22,10 +22,10 @@ update:
 
 # Anything related to how health our codebase is
 test:
-	@poetry run pytest
+	poetry run pytest
 
 mypy:
-	@poetry run mypy .
+	poetry run mypy .
 
 pre-commit:
 	pre-commit run --all-files

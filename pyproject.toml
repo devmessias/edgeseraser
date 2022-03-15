@@ -26,7 +26,7 @@ classifiers = [
 ]
 
 packages = [
-    { include = "edgeseraser", from = "src" }
+    { include = "edgeseraser", from = "" }
 ]
 
 [tool.poetry.dependencies]

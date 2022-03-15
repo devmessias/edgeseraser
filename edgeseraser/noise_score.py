@@ -3,7 +3,6 @@ from typing import Optional, Tuple, TypeVar
 
 import numpy as np
 import scipy.sparse as sp  # type: ignore
-
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
 
 warnings.simplefilter("ignore", FutureWarning)

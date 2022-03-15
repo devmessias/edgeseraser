@@ -3,17 +3,17 @@ from typing import Optional
 
 import numpy as np
 import scipy.stats as stats
-from numba import njit, prange
-from scipy.special import betaln, gamma, gammaln
-
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
+from edgeseraser.misc.fast_math import nbbetaln, nbgammaln
 from edgeseraser.misc.matrix import construct_sp_matrices
+from numba import njit
+from scipy.special import gamma
 
 warnings.simplefilter("ignore", FutureWarning)
 
 
-def compute_polya_pdf(
-    w: np.ndarray, n: np.ndarray, k, a: float = 0.0, approx: bool = False
+def compute_polya_pdf_approx(
+    w: np.ndarray, n: np.ndarray, k, a: float = 0.0
 ) -> np.ndarray:
     """
 
@@ -21,12 +21,9 @@ def compute_polya_pdf(
         w: np.array
             edge weights
         n: np.array
-            number of samples. np.array  dtype is a Float if approx is True
         k: np.array
             degree
         a: float (default: 0)
-        approx: bool (default: False)
-            if True, use approximation
     Returns:
         np.array
 
@@ -38,29 +35,45 @@ def compute_polya_pdf(
 
     a_inv = 1 / a
     b = (k - 1) * a_inv
-    if approx:
-        if a == 1.0:
-            p = (1 - w / n) ** (k - 1)
-        else:
-            p = (
-                1
-                / gamma(a_inv)
-                * ((1 - w / n) ** (b))
-                * ((w * k / n * a) ** (a_inv - 1))
-            )
+    if a == 1.0:
+        p = (1 - w / n) ** (k - 1)
     else:
-        p = np.exp(
-            gammaln(n + 1)
-            + betaln(w + a_inv, n - w + b)
-            - gammaln(w + 1)
-            - gammaln(n - w + 1)
-            - betaln(a_inv, b)
-        )
+        p = 1 / gamma(a_inv) * ((1 - w / n) ** (b)) * ((w * k / n * a) ** (a_inv - 1))
 
     return p
 
 
-@njit(parallel=True, nopython=True)
+@njit(nopython=True)
+def compute_polya_pdf(w, n, k, a) -> np.ndarray:
+    """
+
+    Args:
+        w: np.array
+            edge weights
+        n: np.array
+            number of samples
+        k: np.array
+            degree
+        a: float (default: 0)
+    Returns:
+        np.array
+
+    """
+    a_inv = 1 / a
+    b = (k - 1) * a_inv
+    ones = np.ones_like(w)
+    p = np.exp(
+        nbgammaln(n + ones)
+        + nbbetaln(w + a_inv, n - w + b)
+        - nbgammaln(w + ones)
+        - nbgammaln(n - w + ones)
+        - nbbetaln(a_inv * ones, b * ones)
+    )
+
+    return p
+
+
+@njit(fastmath=True, error_model="numpy")
 def integer_cdf(
     wdegree: np.ndarray, degree: np.ndarray, a: float, weights: np.ndarray
 ) -> np.ndarray:
@@ -80,9 +93,13 @@ def integer_cdf(
 
     """
     p = np.zeros(wdegree.shape, dtype=np.float64)
-    for i in prange(wdegree.shape[0]):
-        x = np.arange(0, int(wdegree[i]))
-        polya_pdf = compute_polya_pdf(x, wdegree, degree, a)
+    for i in range(wdegree.shape[0]):
+        wi = int(weights[i])
+        if wi < 2:
+            p[i] = 0.0
+            continue
+        x = np.arange(0, wi)
+        polya_pdf = compute_polya_pdf(x, wdegree[i], degree[i], a)
         p[i] = 1 - np.sum(polya_pdf)
     return p
 
@@ -110,7 +127,7 @@ def polya_cdf(weights, wdegree, degree, a, apt_lvl, eps=1e-20):
     s = wdegree[k_high]
     scores = np.zeros_like(weights)
     if a == 0:
-        p = compute_polya_pdf(w, s, k)
+        p = compute_polya_pdf_approx(w, s, k)
         return p
 
     a_inv = 1.0 / a
@@ -127,8 +144,8 @@ def polya_cdf(weights, wdegree, degree, a, apt_lvl, eps=1e-20):
     p = np.zeros(w.shape[0])
     idx_true = np.argwhere(idx).flatten()
     if len(idx_true) > 0:
-        p[idx_true] = compute_polya_pdf(
-            w[idx_true], s[idx_true], k[idx_true], a=a, approx=True
+        p[idx_true] = compute_polya_pdf_approx(
+            w[idx_true], s[idx_true], k[idx_true], a=a
         )
     non_zero_idx = np.argwhere(~idx).flatten()
     non_zero_idx = [i for i in non_zero_idx if s[i] > 0 and k[i] > 1]

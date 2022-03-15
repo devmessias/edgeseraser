@@ -32,4 +32,4 @@ plugins:
             show_signature_annotations: true
             show_source: true
       watch:
-        - src/edgeseraser
+        - edgeseraser

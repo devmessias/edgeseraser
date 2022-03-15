@@ -1,7 +1,6 @@
 import igraph as ig
 import networkx as nx
 import numpy as np
-
 from edgeseraser import noise_score
 
 

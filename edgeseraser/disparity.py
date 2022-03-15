@@ -1,6 +1,6 @@
 import sys
 import warnings
-from typing import Optional
+from typing import Any, Optional
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -8,7 +8,6 @@ else:
     from typing_extensions import Literal
 
 import numpy as np
-
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
 from edgeseraser.misc.matrix import construct_sp_matrices
 
@@ -145,7 +144,7 @@ def filter_nx_graph(
     cond: Literal["or", "both", "out", "in"] = "or",
     field: Optional[str] = None,
     remap_labels: bool = False,
-) -> None:
+) -> Any:
     """Filter edges from a networkx graph using the disparity filter.
     (Dirichet proccess)
 
@@ -169,6 +168,7 @@ def filter_nx_graph(
         num_vertices, edges, weights, cond=cond, is_directed=is_directed, thresh=thresh
     )
     nx_erase(g, edges[ids2erase], opts)
+    return g
 
 
 def filter_ig_graph(
@@ -176,7 +176,7 @@ def filter_ig_graph(
     thresh: float = 0.8,
     cond: Literal["or", "both", "out", "in"] = "or",
     field: Optional[str] = None,
-) -> None:
+) -> Any:
     """Filter edges from a igraph instance using the disparity filter.
     (Dirichet proccess)
 
@@ -192,10 +192,10 @@ def filter_ig_graph(
 
     """
     assert thresh > 0.0 and thresh < 1.0, "thresh must be between 0 and 1"
-
     edges, weights, num_vertices, opts = ig_extract(g, field)
     is_directed = g.is_directed()
     ids2erase = filter_generic_graph(
         num_vertices, edges, weights, cond=cond, is_directed=is_directed, thresh=thresh
     )
     ig_erase(g, ids2erase)
+    return g

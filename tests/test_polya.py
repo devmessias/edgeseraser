@@ -1,7 +1,6 @@
 import igraph as ig
 import networkx as nx
 import numpy as np
-
 from edgeseraser import disparity, polya
 from edgeseraser.misc import backend
 
@@ -11,7 +10,7 @@ def test_pdf():
     n = 40
     k = 10.0
     a = 0.0
-    p = polya.compute_polya_pdf(w, n, k, a)
+    p = polya.compute_polya_pdf_approx(w, n, k, a)
     assert np.allclose(np.argsort(p), np.array([0, 1, 2, 3, 4]))
 
 
@@ -37,7 +36,7 @@ def test_polya_scores_int_weight():
 
 
 def test_igraph():
-    g = ig.Graph.Watts_Strogatz(100, 8, 0.2)
+    g = ig.Graph.Erdos_Renyi(100, 0.6, directed=True)
     g = g.components(mode="weak").giant()
     polya.filter_ig_graph(g)
 
