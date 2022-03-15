@@ -3,6 +3,7 @@ from typing import Optional
 
 import numpy as np
 import scipy.stats as stats
+from numba import njit, prange
 from scipy.special import betaln, gamma, gammaln
 
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
@@ -20,8 +21,9 @@ def compute_polya_pdf(
         w: np.array
             edge weights
         n: np.array
-            number of samples
+            number of samples. np.array  dtype is a Float if approx is True
         k: np.array
+            degree
         a: float (default: 0)
         approx: bool (default: False)
             if True, use approximation
@@ -58,12 +60,39 @@ def compute_polya_pdf(
     return p
 
 
-def polya_cdf(weights, w_degree, degree, a, apt_lvl, eps=1e-20):
+@njit(parallel=True, nopython=True)
+def integer_cdf(
+    wdegree: np.ndarray, degree: np.ndarray, a: float, weights: np.ndarray
+) -> np.ndarray:
+    """Compute the prob of the integer weight distribution using numba JIT and parallelization.
+
+    Args:
+        wdegree: np.array
+            edge weighted degrees
+        degree: np.array
+            vertex degrees
+        a: float
+        weights: np.array
+            edge weights
+    Returns:
+        np.array:
+            Probability values for each edge with integer weights
+
+    """
+    p = np.zeros(wdegree.shape, dtype=np.float64)
+    for i in prange(wdegree.shape[0]):
+        x = np.arange(0, int(wdegree[i]))
+        polya_pdf = compute_polya_pdf(x, wdegree, degree, a)
+        p[i] = 1 - np.sum(polya_pdf)
+    return p
+
+
+def polya_cdf(weights, wdegree, degree, a, apt_lvl, eps=1e-20):
     """
     Args:
         weights: np.array
             edge weights
-        w_degree: np.array
+        wdegree: np.array
             edge weighted degrees
         degree: np.array
             vertex degrees
@@ -72,13 +101,13 @@ def polya_cdf(weights, w_degree, degree, a, apt_lvl, eps=1e-20):
         eps: float
     Returns:
         np.array:
-            Probability values
+            Probability values for each edge
 
     """
     k_high = degree > 1
     k = degree[k_high]
     w = weights[k_high]
-    s = w_degree[k_high]
+    s = wdegree[k_high]
     scores = np.zeros_like(weights)
     if a == 0:
         p = compute_polya_pdf(w, s, k)
@@ -104,12 +133,10 @@ def polya_cdf(weights, w_degree, degree, a, apt_lvl, eps=1e-20):
     non_zero_idx = np.argwhere(~idx).flatten()
     non_zero_idx = [i for i in non_zero_idx if s[i] > 0 and k[i] > 1]
     if len(non_zero_idx) > 0:
-        for i, i_idx in enumerate(non_zero_idx):
-            si = s[i_idx]
-            ki = k[i_idx]
-            x = np.arange(0, int(w[i]))
-            polya_pdf = compute_polya_pdf(x, si, ki, a)
-            p[i_idx] = 1 - np.sum(polya_pdf)
+        p[non_zero_idx] = integer_cdf(
+            s[non_zero_idx], k[non_zero_idx], a, w[non_zero_idx]
+        )
+
     scores[k_high] = p
     return scores
 
@@ -123,7 +150,8 @@ def scores_generic_graph(
     is_directed: bool = False,
     eps: float = 1e-20,
 ) -> np.ndarray:
-    """Compute the probability for each edge using the Pólya-based method.
+    """Compute the probability for each edge using the Pólya-based method for
+    a generic weighted graph.
 
     Args:
         num_vertices: int
@@ -148,16 +176,16 @@ def scores_generic_graph(
     calc_degree = lambda x, i: np.asarray(x.sum(axis=i)).flatten().astype(np.float64)
     ids_out = edges[:, 0]
     ids_in = edges[:, 1]
-    s_out = calc_degree(w_adj, 1)[ids_out]
-    s_in = calc_degree(w_adj, 0)[ids_in]
-    k_out = calc_degree(adj, 1)[ids_out]
-    k_in = calc_degree(adj, 0)[ids_in]
+    wdegree_out = calc_degree(w_adj, 1)[ids_out]
+    wdegree_in = calc_degree(w_adj, 0)[ids_in]
+    degree_out = calc_degree(adj, 1)[ids_out]
+    degree_in = calc_degree(adj, 0)[ids_in]
 
     if np.mod(weights, 1).sum() > eps:
         # non integer weights
         apt_lvl = 0
-    p_in = polya_cdf(weights, s_in, k_in, a, apt_lvl)
-    p_out = polya_cdf(weights, s_out, k_out, a, apt_lvl)
+    p_in = polya_cdf(weights, wdegree_in, degree_in, a, apt_lvl)
+    p_out = polya_cdf(weights, wdegree_out, degree_out, a, apt_lvl)
     p = np.minimum(p_in, p_out)
     return p
 
