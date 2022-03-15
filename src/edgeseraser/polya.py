@@ -59,7 +59,22 @@ def compute_polya_pdf(
 
 
 def polya_cdf(weights, w_degree, degree, a, apt_lvl, eps=1e-20):
+    """
+    Args:
+        weights: np.array
+            edge weights
+        w_degree: np.array
+            edge weighted degrees
+        degree: np.array
+            vertex degrees
+        a: float
+        apt_lvl: int
+        eps: float
+    Returns:
+        np.array:
+            Probability values
 
+    """
     k_high = degree > 1
     k = degree[k_high]
     w = weights[k_high]
@@ -108,6 +123,24 @@ def scores_generic_graph(
     is_directed: bool = False,
     eps: float = 1e-20,
 ) -> np.ndarray:
+    """Compute the probability for each edge using the Pólya-based method.
+
+    Args:
+        num_vertices: int
+            number of vertices
+        edges: np.array
+            edges
+        weights: np.array
+            edge weights
+        a: float
+        apt_lvl: int
+        is_directed: bool
+        eps: float
+    Returns:
+        np.array:
+            edge scores. Probability values
+
+    """
     w_adj, adj = construct_sp_matrices(
         weights, edges, num_vertices, is_directed=is_directed
     )
@@ -155,6 +188,25 @@ def filter_generic_graph(
     is_directed: bool = False,
     eps: float = 1e-20,
 ) -> np.ndarray:
+    """Filter the graph using the Pólya-based method.
+
+    Args:
+        num_vertices: int
+            number of vertices
+        edges: np.array
+            edges
+        weights: np.array
+            edge weights
+        thresh: float
+        a: float
+        apt_lvl: int
+        is_directed: bool
+        eps: float
+    Returns:
+        np.array:
+            indices of edges to be erased
+
+    """
     p = scores_generic_graph(
         num_vertices,
         edges,
@@ -173,6 +225,8 @@ def filter_nx_graph(
     g,
     thresh: float = 0.5,
     field: Optional[str] = None,
+    a: float = 2,
+    apt_lvl: int = 10,
     remap_labels: bool = False,
 ) -> None:
     """Filter edges from a networkx graph using the Pólya filter.
@@ -181,16 +235,23 @@ def filter_nx_graph(
         g: networkx.Graph
             graph to be filtered
         thresh: float
-            Between 0 and 1.
-        cond: str
-            "out", "in", "both", "or"
-
+        a: float
+            0 is the Binomial distribution,
+            1 the filter will behave like the Disparity filter.
+        apt_lvl: int
+        remap_labels: bool
+            If True, the labels of the nodes are remapped to consecutive integers.
     """
-    assert thresh > 0.0 and thresh < 1.0, "thresh must be between 0 and 1"
     edges, weights, num_vertices, opts = nx_extract(g, remap_labels, field)
     is_directed: bool = opts["is_directed"]
     ids2erase = filter_generic_graph(
-        num_vertices, edges, weights, is_directed=is_directed
+        num_vertices,
+        edges,
+        weights,
+        is_directed=is_directed,
+        a=a,
+        apt_lvl=apt_lvl,
+        thresh=thresh,
     )
 
     nx_erase(g, edges[ids2erase], opts)
@@ -200,22 +261,33 @@ def filter_ig_graph(
     g,
     thresh: float = 0.5,
     field: Optional[str] = None,
+    a: float = 2,
+    apt_lvl: int = 10,
+    remap_labels: bool = False,
 ) -> None:
-    """Filter edges from a igraph instance using the Pólya-Urn filter.
+    """Filter edges from a networkx graph using the Pólya filter.
 
     Parameters:
-        g: igraph.Graph
+        g: networkx.Graph
             graph to be filtered
         thresh: float
-            Between 0 and 1.
-        cond: str
-            "out", "in", "both", "or"
+        a: float
+            0 is the Binomial distribution,
+            1 the filter will behave like the Disparity filter.
+        apt_lvl: int
 
     """
-    assert thresh > 0.0 and thresh < 1.0, "thresh must be between 0 and 1"
 
     edges, weights, num_vertices, opts = ig_extract(g, field)
     is_directed: bool = opts["is_directed"]
-    alphas = filter_generic_graph(num_vertices, edges, weights, is_directed=is_directed)
+    alphas = filter_generic_graph(
+        num_vertices,
+        edges,
+        weights,
+        is_directed=is_directed,
+        a=a,
+        apt_lvl=apt_lvl,
+        thresh=thresh,
+    )
     ids2erase = cond_edges2erase(alphas, thresh=thresh)
     ig_erase(g, ids2erase)

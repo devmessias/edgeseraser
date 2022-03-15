@@ -114,7 +114,23 @@ def filter_generic_graph(
     cond: Literal["or", "both", "out", "in"] = "or",
     is_directed: bool = False,
 ):
+    """Filter edges from a graph using the disparity filter.
+    (Dirichet proccess)
 
+    Args:
+        g: networkx.Graph
+            graph to be filtered
+        thresh: float
+            Between 0 and 1.
+        cond: str
+            "out", "in", "both", "or"
+        is_directed: bool
+            if True, the graph is considered as directed
+    Returns:
+        np.array:
+            indices of edges to be erased
+
+    """
     alphas = scores_generic_graph(
         num_vertices, edges, weights, cond=cond, is_directed=is_directed
     )
@@ -140,6 +156,10 @@ def filter_nx_graph(
             Between 0 and 1.
         cond: str
             "out", "in", "both", "or"
+        field: str
+            edge weight field
+        remap_labels: bool
+            if True, the labels of the graph will be remapped to consecutive integers
 
     """
     assert thresh > 0.0 and thresh < 1.0, "thresh must be between 0 and 1"
@@ -167,6 +187,8 @@ def filter_ig_graph(
             Between 0 and 1.
         cond: str
             "out", "in", "both", "or"
+        field: str or None
+            field to use for edge weights
 
     """
     assert thresh > 0.0 and thresh < 1.0, "thresh must be between 0 and 1"

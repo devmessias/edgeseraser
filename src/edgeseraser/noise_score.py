@@ -144,7 +144,8 @@ def filter_generic_graph(
             2.32, which approximate p-values of 0.1, 0.05, and 0.0
 
     Returns:
-        np.array
+        np.array:
+        indices of edges to be erased
 
     """
     scores_uv, std_uv = scores_generic_graph(w_degree, edges, weights)
