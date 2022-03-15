@@ -1,3 +1,4 @@
+.PHONY: clean-dist
 ifeq (,$(shell which poetry))
 $(error "poetry not found. Please install it first. pip install poetry")
 endif
@@ -9,11 +10,16 @@ install:
 	poetry shell
 	poetry update
 	poetry install
+
+install-dev: install
 	pre-commit install
 
+# update your dependencies
 update:
 	poetry shell
 	poetry update
+	poetry install
+
 # Anything related to how health our codebase is
 test:
 	@poetry run pytest
@@ -24,6 +30,9 @@ mypy:
 pre-commit:
 	pre-commit run --all-files
 
+# build the pkgs inside dist
+build:
+	poetry build
 
 # Documentation
 docs-serve:
@@ -31,3 +40,16 @@ docs-serve:
 
 docs-deploy:
 	poetry run mkdocs gh-deploy --force
+
+
+# Helps to install as pip pkg if you are using other envs
+clean-dist:
+	find -L dist/ -name '*.whl' -type f -delete
+
+uninstall-pkg:
+	pip uninstall edgeseraser -y
+
+
+install-pkg: clean-dist build uninstall-pkg
+	$(eval FILE_WHL := $(shell find -L dist/ -name '*.whl' | sort | tail -n 1))
+	pip install $(FILE_WHL)
