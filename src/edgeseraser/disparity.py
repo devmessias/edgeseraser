@@ -55,7 +55,7 @@ def cond_edges2erase(alphas: np.ndarray, thresh: float = 0.1) -> np.ndarray:
             indices of edges to be erased
 
     """
-    ids2erase = np.argwhere(alphas < thresh).flatten()
+    ids2erase = np.argwhere(alphas > thresh).flatten()
     return ids2erase
 
 
