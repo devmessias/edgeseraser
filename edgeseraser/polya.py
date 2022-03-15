@@ -1,5 +1,5 @@
 import warnings
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 import scipy.stats as stats
@@ -273,7 +273,7 @@ def filter_nx_graph(
     a: float = 2,
     apt_lvl: int = 10,
     remap_labels: bool = False,
-) -> None:
+) -> Any:
     """Filter edges from a networkx graph using the Pólya filter.
 
     Parameters:
@@ -300,6 +300,7 @@ def filter_nx_graph(
     )
 
     nx_erase(g, edges[ids2erase], opts)
+    return Any
 
 
 def filter_ig_graph(
@@ -308,8 +309,7 @@ def filter_ig_graph(
     field: Optional[str] = None,
     a: float = 2,
     apt_lvl: int = 10,
-    remap_labels: bool = False,
-) -> None:
+) -> Any:
     """Filter edges from a networkx graph using the Pólya filter.
 
     Parameters:
@@ -336,3 +336,4 @@ def filter_ig_graph(
     )
     ids2erase = cond_edges2erase(alphas, thresh=thresh)
     ig_erase(g, ids2erase)
+    return g

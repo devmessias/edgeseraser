@@ -1,5 +1,5 @@
 import warnings
-from typing import Optional, Tuple, TypeVar
+from typing import Any, Optional, Tuple, TypeVar
 
 import numpy as np
 import scipy.sparse as sp  # type: ignore
@@ -154,7 +154,7 @@ def filter_generic_graph(
 
 def filter_nx_graph(
     g, param: float = 1.28, field: Optional[str] = None, remap_labels=False
-) -> None:
+) -> Any:
     """Filter edge with high noise score from a networkx graph.
 
     Args:
@@ -189,7 +189,7 @@ def filter_nx_graph(
     nx_erase(g, edges[ids2erase], opts)
 
 
-def filter_ig_graph(g, param: float = 1.28, field: Optional[str] = None) -> None:
+def filter_ig_graph(g, param: float = 1.28, field: Optional[str] = None) -> Any:
     """Filter edge with high noise score from a igraph graph.
 
     Args:
@@ -221,3 +221,4 @@ def filter_ig_graph(g, param: float = 1.28, field: Optional[str] = None) -> None
     ids2erase = filter_generic_graph(wdegree, edges, weights, param=param)
 
     ig_erase(g, ids2erase)
+    return g
