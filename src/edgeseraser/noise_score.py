@@ -91,12 +91,12 @@ def noisy_scores(
 
 
 def scores_generic_graph(
-    w_degree: np.ndarray, edges: np.ndarray, weights: np.ndarray
+    wdegree: np.ndarray, edges: np.ndarray, weights: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Compute noise corrected edge weights for a sparse graph.
 
     Args:
-        w_degree: np.ndarray
+        wdegree: np.ndarray
             Weight degree of each vertex.
         edges: np.array
             Edges of the graph.
@@ -112,10 +112,10 @@ def scores_generic_graph(
 
     """
 
-    vol = w_degree.sum()
+    vol = wdegree.sum()
 
-    st_u = w_degree[edges[:, 0]]
-    st_v = w_degree[edges[:, 1]]
+    st_u = wdegree[edges[:, 0]]
+    st_v = wdegree[edges[:, 1]]
     scores = st_u * st_v
     ids_0 = np.argwhere(scores == 0)
     st_u[ids_0] = 1
@@ -127,12 +127,12 @@ def scores_generic_graph(
 
 
 def filter_generic_graph(
-    w_degree: np.ndarray, edges: np.ndarray, weights: np.ndarray, param: float = 1.28
+    wdegree: np.ndarray, edges: np.ndarray, weights: np.ndarray, param: float = 1.28
 ) -> np.ndarray:
     """Compute noise corrected edge weights for a sparse graph.
 
     Args:
-        w_degree: np.ndarray
+        wdegree: np.ndarray
             Weight degree of each vertex.
         edges: np.array
             Edges of the graph.
@@ -148,7 +148,7 @@ def filter_generic_graph(
         indices of edges to be erased
 
     """
-    scores_uv, std_uv = scores_generic_graph(w_degree, edges, weights)
+    scores_uv, std_uv = scores_generic_graph(wdegree, edges, weights)
     ids2erase = cond_edges2erase(scores_uv, std_uv, thresh=param)
     return ids2erase
 
@@ -184,8 +184,8 @@ def filter_nx_graph(
     """
     edges, weights, num_vertices, opts = nx_extract(g, remap_labels, field)
     w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
-    w_degree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
-    ids2erase = filter_generic_graph(w_degree, edges, weights, param=param)
+    wdegree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
+    ids2erase = filter_generic_graph(wdegree, edges, weights, param=param)
 
     nx_erase(g, edges[ids2erase], opts)
 
@@ -217,8 +217,8 @@ def filter_ig_graph(g, param: float = 1.28, field: Optional[str] = None) -> None
     """
     edges, weights, num_vertices, opts = ig_extract(g, field)
     w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
-    w_degree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
+    wdegree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
 
-    ids2erase = filter_generic_graph(w_degree, edges, weights, param=param)
+    ids2erase = filter_generic_graph(wdegree, edges, weights, param=param)
 
     ig_erase(g, ids2erase)

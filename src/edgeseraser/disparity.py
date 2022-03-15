@@ -16,13 +16,13 @@ warnings.simplefilter("ignore", FutureWarning)
 
 
 def stick_break_scores(
-    w_degree: np.ndarray, degree: np.ndarray, edges: np.ndarray, weights: np.ndarray
+    wdegree: np.ndarray, degree: np.ndarray, edges: np.ndarray, weights: np.ndarray
 ) -> np.ndarray:
     """
     Calculate the stick-breaking scores for each edge.
 
     Args:
-        w_degree: np.array
+        wdegree: np.array
             edge weighted degree
         degree: np.array
             degree of each vertex
@@ -37,7 +37,7 @@ def stick_break_scores(
     """
     alphas = np.ones(edges.shape[0])
     ids_d1 = degree > 1
-    st = weights[ids_d1] / w_degree[ids_d1]
+    st = weights[ids_d1] / wdegree[ids_d1]
     assert np.all(st <= 1)
     alphas[ids_d1] = (1 - st) ** (degree[ids_d1] - 1)
     return alphas
@@ -87,17 +87,17 @@ def scores_generic_graph(
     calc_degree = lambda x, i: np.asarray(x.sum(axis=i)).flatten().astype(np.float64)
     iin = edges[:, 1]
     iout = edges[:, 0]
-    w_degree_out = calc_degree(w_adj, 0)[iout]
+    wdegree_out = calc_degree(w_adj, 0)[iout]
     degree_out = calc_degree(adj, 0)[iout]
-    w_degree_in = calc_degree(w_adj, 1)[iin]
+    wdegree_in = calc_degree(w_adj, 1)[iin]
     degree_in = calc_degree(adj, 1)[iin]
     if cond == "out":
-        alphas = stick_break_scores(w_degree_out, degree_out, edges, weights)
+        alphas = stick_break_scores(wdegree_out, degree_out, edges, weights)
     elif cond == "in":
-        alphas = stick_break_scores(w_degree_in, degree_in, edges, weights)
+        alphas = stick_break_scores(wdegree_in, degree_in, edges, weights)
     else:
-        alphas_out = stick_break_scores(w_degree_out, degree_out, edges, weights)
-        alphas_in = stick_break_scores(w_degree_in, degree_in, edges, weights)
+        alphas_out = stick_break_scores(wdegree_out, degree_out, edges, weights)
+        alphas_in = stick_break_scores(wdegree_in, degree_in, edges, weights)
         if cond == "both":
             alphas = np.maximum(alphas_out, alphas_in)
         elif cond == "or":
