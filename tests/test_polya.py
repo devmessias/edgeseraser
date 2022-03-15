@@ -1,3 +1,4 @@
+import igraph as ig
 import networkx as nx
 import numpy as np
 
@@ -33,3 +34,25 @@ def test_polya_scores_int_weight():
     data = {(u, v): np.random.uniform(1, 10) for u, v in g.edges()}
     nx.set_edge_attributes(g, data, "weight")
     polya.filter_nx_graph(g, field="weight")
+
+
+def test_igraph():
+    g = ig.Graph.Watts_Strogatz(100, 8, 0.2)
+    g = g.components(mode="weak").giant()
+    polya.filter_ig_graph(g)
+
+
+def test_integer_weights():
+    eps = 10e-20
+    g = nx.watts_strogatz_graph(100, 8, 0.2)
+    g = g.subgraph(max(nx.connected_components(g), key=len))
+    g = nx.Graph(g)
+    nx.relabel_nodes(g, {n: i for i, n in enumerate(g.nodes())}, copy=False)
+    bb = nx.edge_betweenness_centrality(g, normalized=False)
+    bb = {(u, v): int(round(bb[(u, v)])) for u, v in g.edges()}
+    nx.set_edge_attributes(g, bb, "betweenness")
+    edges, weights, num_vertices, opts = backend.nx_extract(g, field="betweenness")
+    assert np.mod(weights, 1).sum() < eps
+    polya.scores_generic_graph(
+        num_vertices, edges, weights, a=2, is_directed=opts["is_directed"]
+    )
