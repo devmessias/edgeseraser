@@ -10,12 +10,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 -   Pólya-Urn method for integer weighted graphs now uses JIT compilation to
     speed up the computation.
 -   Tests for integer weighted graphs.
--   Makefile targets to build and install the package in a single command using whl.
+-   Makefile targets to build and install the package in a single command.
+-   Fast math implementation for Beta-log and Gamma-log functions.
+-   Tests for for fast math implementations.
 ### Fixed
 - Disparity filter
+- Pólya-Urn methdo for integer weighted graphs
+- Tests
 
 ### Changed
 -   Same variable name for weight, weighted degree, etc.
+-   Folder structure.
 ## [0.4.1] - 2022-03-15
 ### Fixed
 - Docstrings

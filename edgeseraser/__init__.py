@@ -31,11 +31,11 @@ g # filtered graph
 [4]: https://www.michelecoscia.com/?p=1236
 [5]: https://www.nature.com/articles/s41467-019-08667-3
 
-[Noise Score]: /api_docs/#edgeseraser.noise_score
-[Disparity]: /api_docs/#edgeseraser.disparity
-[Pólya-Urn]: /api_docs/#edgeseraser.polya
+[Noise Score]: https://devmessias.github.io/edgeseraser/api_docs/#edgeseraser.noise_score
+[Disparity]: https://devmessias.github.io/edgeseraser/api_docs/#edgeseraser.disparity
+[Pólya-Urn]: https://devmessias.github.io/edgeseraser/api_docs/#edgeseraser.polya
 """
 
 __author__ = """Bruno Messias"""
 __email__ = "devmessias@gmail.com"
-__version__ = "0.1.0"
+__version__ = "0.5.0"
