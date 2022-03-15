@@ -5,8 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 
 ## [Unreleased]
+
+## [0.4.2] - 2022-03-15
 ### Fixed
 - Disparity filter
+
 ## [0.4.1] - 2022-03-15
 ### Fixed
 - Docstrings
@@ -43,7 +46,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Disparity filter
 - Networkx integration
 
-[Unreleased]: https://github.com/devmessias/edgeseraser/compare/0.4.1...master
+[Unreleased]: https://github.com/devmessias/edgeseraser/compare/0.4.2...master
+[0.4.2]: https://github.com/devmessias/edgeseraser/compare/0.4.1...0.4.2
 [0.4.1]: https://github.com/devmessias/edgeseraser/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/devmessias/edgeseraser/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/devmessias/edgeseraser/compare/0.2.1...0.3.0
