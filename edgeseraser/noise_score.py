@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Optional, Tuple, TypeVar
+from typing import Optional, Tuple, TypeVar
 
 import numpy as np
 import scipy.sparse as sp  # type: ignore
@@ -126,13 +126,12 @@ def scores_generic_graph(
 
 
 def filter_generic_graph(
-    wdegree: np.ndarray, edges: np.ndarray, weights: np.ndarray, param: float = 1.28
-) -> np.ndarray:
+    num_vertices: int, edges: np.ndarray, weights: np.ndarray, param: float = 1.28
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute noise corrected edge weights for a sparse graph.
 
     Args:
-        wdegree: np.ndarray
-            Weight degree of each vertex.
+        num_vertices: int
         edges: np.array
             Edges of the graph.
         weights: np.array
@@ -143,18 +142,23 @@ def filter_generic_graph(
             2.32, which approximate p-values of 0.1, 0.05, and 0.0
 
     Returns:
-        np.array:
-        indices of edges to be erased
+        (np.array, np.array, np.array)
+        -   indices of edges to be erased
+        -   noise score for each edge
+        -   standard deviation of noise score for each edge
 
     """
+    w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
+    wdegree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
+
     scores_uv, std_uv = scores_generic_graph(wdegree, edges, weights)
     ids2erase = cond_edges2erase(scores_uv, std_uv, thresh=param)
-    return ids2erase
+    return ids2erase, scores_uv, std_uv
 
 
 def filter_nx_graph(
     g, param: float = 1.28, field: Optional[str] = None, remap_labels=False
-) -> Any:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Filter edge with high noise score from a networkx graph.
 
     Args:
@@ -168,6 +172,11 @@ def filter_nx_graph(
             Edge field to be used for filtering.
         remap_labels: bool (default: False)
             If True, the labels of the graph will be remapped to consecutive
+    Returns:
+        (np.array, np.array, np.array)
+        -   indices of edges erased
+        -   noise score for each edge
+        -   standard deviation of noise score for each edge
 
     Example:
         ```python
@@ -182,14 +191,17 @@ def filter_nx_graph(
 
     """
     edges, weights, num_vertices, opts = nx_extract(g, remap_labels, field)
-    w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
-    wdegree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
-    ids2erase = filter_generic_graph(wdegree, edges, weights, param=param)
-
+    ids2erase, scores_uv, std_uv = filter_generic_graph(
+        num_vertices, edges, weights, param=param
+    )
     nx_erase(g, edges[ids2erase], opts)
 
+    return ids2erase, scores_uv, std_uv
 
-def filter_ig_graph(g, param: float = 1.28, field: Optional[str] = None) -> Any:
+
+def filter_ig_graph(
+    g, param: float = 1.28, field: Optional[str] = None
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Filter edge with high noise score from a igraph graph.
 
     Args:
@@ -201,6 +213,11 @@ def filter_ig_graph(g, param: float = 1.28, field: Optional[str] = None) -> Any:
             2.32, which approximate p-values of 0.1, 0.05, and 0.0
         field: str
             Edge field to be used for filtering.
+    Returns:
+        (np.array, np.array, np.array)
+        -   indices of edges erased
+        -   noise score for each edge
+        -   standard deviation of noise score for each edge
 
     Example:
         ```python
@@ -215,10 +232,9 @@ def filter_ig_graph(g, param: float = 1.28, field: Optional[str] = None) -> Any:
 
     """
     edges, weights, num_vertices, opts = ig_extract(g, field)
-    w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
-    wdegree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
-
-    ids2erase = filter_generic_graph(wdegree, edges, weights, param=param)
-
+    ids2erase, scores_uv, std_uv = filter_generic_graph(
+        num_vertices, edges, weights, param=param
+    )
     ig_erase(g, ids2erase)
-    return g
+
+    return ids2erase, scores_uv, std_uv

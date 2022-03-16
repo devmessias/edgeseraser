@@ -1,6 +1,6 @@
 import sys
 import warnings
-from typing import Any, Optional
+from typing import Optional, Tuple
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -112,7 +112,7 @@ def filter_generic_graph(
     thresh: float = 0.8,
     cond: Literal["or", "both", "out", "in"] = "or",
     is_directed: bool = False,
-):
+) -> Tuple[np.ndarray, np.ndarray]:
     """Filter edges from a graph using the disparity filter.
     (Dirichet proccess)
 
@@ -126,8 +126,10 @@ def filter_generic_graph(
         is_directed: bool
             if True, the graph is considered as directed
     Returns:
-        np.array:
-            indices of edges to be erased
+        (np.array, np.array)
+        -  indices of edges to be erased
+        -  alphas scores for each edge
+
 
     """
     alphas = scores_generic_graph(
@@ -135,7 +137,7 @@ def filter_generic_graph(
     )
 
     ids2erase = cond_edges2erase(alphas, thresh=thresh)
-    return ids2erase
+    return ids2erase, alphas
 
 
 def filter_nx_graph(
@@ -144,7 +146,7 @@ def filter_nx_graph(
     cond: Literal["or", "both", "out", "in"] = "or",
     field: Optional[str] = None,
     remap_labels: bool = False,
-) -> Any:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Filter edges from a networkx graph using the disparity filter.
     (Dirichet proccess)
 
@@ -159,16 +161,24 @@ def filter_nx_graph(
             edge weight field
         remap_labels: bool
             if True, the labels of the graph will be remapped to consecutive integers
+    Returns:
+        (np.array, np.array)
+        -  indices of edges erased
+        -  alphas scores for each edge
 
     """
     assert thresh > 0.0 and thresh < 1.0, "thresh must be between 0 and 1"
     edges, weights, num_vertices, opts = nx_extract(g, remap_labels, field)
-    is_directed = g.is_directed()
-    ids2erase = filter_generic_graph(
-        num_vertices, edges, weights, cond=cond, is_directed=is_directed, thresh=thresh
+    ids2erase, alphas = filter_generic_graph(
+        num_vertices,
+        edges,
+        weights,
+        cond=cond,
+        is_directed=opts["is_directed"],
+        thresh=thresh,
     )
     nx_erase(g, edges[ids2erase], opts)
-    return g
+    return ids2erase, alphas
 
 
 def filter_ig_graph(
@@ -176,7 +186,7 @@ def filter_ig_graph(
     thresh: float = 0.8,
     cond: Literal["or", "both", "out", "in"] = "or",
     field: Optional[str] = None,
-) -> Any:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Filter edges from a igraph instance using the disparity filter.
     (Dirichet proccess)
 
@@ -189,13 +199,21 @@ def filter_ig_graph(
             "out", "in", "both", "or"
         field: str or None
             field to use for edge weights
+    Returns:
+        (np.array, np.array)
+        -  indices of edges erased
+        -  alphas scores for each edge
 
     """
     assert thresh > 0.0 and thresh < 1.0, "thresh must be between 0 and 1"
     edges, weights, num_vertices, opts = ig_extract(g, field)
-    is_directed = g.is_directed()
-    ids2erase = filter_generic_graph(
-        num_vertices, edges, weights, cond=cond, is_directed=is_directed, thresh=thresh
+    ids2erase, alphas = filter_generic_graph(
+        num_vertices,
+        edges,
+        weights,
+        cond=cond,
+        is_directed=opts["is_directed"],
+        thresh=thresh,
     )
     ig_erase(g, ids2erase)
-    return g
+    return ids2erase, alphas

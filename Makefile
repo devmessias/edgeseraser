@@ -1,6 +1,6 @@
 .PHONY: clean-dist
 ifeq (,$(shell which poetry))
-$(error "poetry not found. Please install it first. pip install poetry")
+$(echo "poetry not found. Please install it first. pip install poetry")
 endif
 
 init:
@@ -36,7 +36,7 @@ build:
 
 # Documentation
 docs-serve:
-	@poetry run mkdocs serve
+	poetry run mkdocs serve
 
 docs-deploy:
 	poetry run mkdocs gh-deploy --force
@@ -49,7 +49,8 @@ clean-dist:
 uninstall-pkg:
 	pip uninstall edgeseraser -y
 
-
-install-pkg: clean-dist build uninstall-pkg
+install-pip: uninstall-pkg
 	$(eval FILE_WHL := $(shell find -L dist/ -name '*.whl' | sort | tail -n 1))
 	pip install $(FILE_WHL)
+
+install-pkg: clean-dist build install-pip

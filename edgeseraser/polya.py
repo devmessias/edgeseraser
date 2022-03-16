@@ -1,5 +1,5 @@
 import warnings
-from typing import Any, Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import scipy.stats as stats
@@ -232,7 +232,7 @@ def filter_generic_graph(
     apt_lvl: int = 10,
     is_directed: bool = False,
     eps: float = 1e-20,
-) -> np.ndarray:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Filter the graph using the Pólya-based method.
 
     Args:
@@ -247,9 +247,11 @@ def filter_generic_graph(
         apt_lvl: int
         is_directed: bool
         eps: float
+
     Returns:
-        np.array:
-            indices of edges to be erased
+        (np.array, np.array)
+        -  indices of edges to be erased
+        -  probability for each edge
 
     """
     p = scores_generic_graph(
@@ -263,7 +265,7 @@ def filter_generic_graph(
     )
 
     ids2erase = cond_edges2erase(p, thresh=thresh)
-    return ids2erase
+    return ids2erase, p
 
 
 def filter_nx_graph(
@@ -273,7 +275,7 @@ def filter_nx_graph(
     a: float = 2,
     apt_lvl: int = 10,
     remap_labels: bool = False,
-) -> Any:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Filter edges from a networkx graph using the Pólya filter.
 
     Parameters:
@@ -286,10 +288,16 @@ def filter_nx_graph(
         apt_lvl: int
         remap_labels: bool
             If True, the labels of the nodes are remapped to consecutive integers.
+
+    Returns:
+        (np.array, np.array)
+        -  indices of edges erased
+        -  probability for each edge
+
     """
     edges, weights, num_vertices, opts = nx_extract(g, remap_labels, field)
     is_directed: bool = opts["is_directed"]
-    ids2erase = filter_generic_graph(
+    ids2erase, probs = filter_generic_graph(
         num_vertices,
         edges,
         weights,
@@ -300,7 +308,7 @@ def filter_nx_graph(
     )
 
     nx_erase(g, edges[ids2erase], opts)
-    return Any
+    return ids2erase, probs
 
 
 def filter_ig_graph(
@@ -309,7 +317,7 @@ def filter_ig_graph(
     field: Optional[str] = None,
     a: float = 2,
     apt_lvl: int = 10,
-) -> Any:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Filter edges from a networkx graph using the Pólya filter.
 
     Parameters:
@@ -321,11 +329,15 @@ def filter_ig_graph(
             1 the filter will behave like the Disparity filter.
         apt_lvl: int
 
+     Return:
+        (np.array, np.array)
+        -  indices of edges erased
+        -  probability for each edge
     """
 
     edges, weights, num_vertices, opts = ig_extract(g, field)
     is_directed: bool = opts["is_directed"]
-    alphas = filter_generic_graph(
+    ids2erase, probs = filter_generic_graph(
         num_vertices,
         edges,
         weights,
@@ -334,6 +346,5 @@ def filter_ig_graph(
         apt_lvl=apt_lvl,
         thresh=thresh,
     )
-    ids2erase = cond_edges2erase(alphas, thresh=thresh)
     ig_erase(g, ids2erase)
-    return g
+    return ids2erase, probs
