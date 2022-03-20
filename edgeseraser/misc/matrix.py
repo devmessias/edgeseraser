@@ -1,15 +1,18 @@
+from typing import Tuple
+
 import numpy as np
-import scipy.sparse as sp
+import scipy.sparse as sparse
+from edgeseraser.misc.typing import NpArrayEdges, NpArrayEdgesFloat
 
 
 def construct_sp_matrices(
-    weights: np.ndarray,
-    edges: np.ndarray,
+    weights: NpArrayEdgesFloat,
+    edges: NpArrayEdges,
     num_vertices: int,
     is_directed: bool = True,
-):
+) -> Tuple[sparse.csr_matrix, sparse.csr_matrix]:
     if weights.shape[0] < num_vertices * (num_vertices - 1) / 1.2:
-        w_adj = sp.csr_matrix(
+        w_adj = sparse.csr_matrix(
             (weights, edges.T), shape=(num_vertices, num_vertices), dtype=np.float64
         )
     else:

@@ -4,16 +4,17 @@ from typing import Optional, Tuple, Union
 import igraph as ig
 import networkx as nx
 import numpy as np
-import scipy.sparse as sp  # type: ignore
+import scipy.sparse as sp
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
 from edgeseraser.misc.matrix import construct_sp_matrices
+from edgeseraser.misc.typing import NpArrayEdges, NpArrayEdgesFloat, NpArrayEdgesIds
 
 warnings.simplefilter("ignore", FutureWarning)
 
 
 def cond_edges2erase(
-    scores_uv: np.ndarray, std_uv: np.ndarray, thresh: float = 1.28
-) -> np.ndarray:
+    scores_uv: NpArrayEdgesFloat, std_uv: NpArrayEdgesFloat, thresh: float = 1.28
+) -> NpArrayEdgesIds:
     """Filter edges with high noise score.
 
     Args:
@@ -35,8 +36,8 @@ def cond_edges2erase(
 
 
 def noisy_scores(
-    st_u: np.ndarray, st_v: np.ndarray, vol: float, w: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray]:
+    st_u: NpArrayEdgesFloat, st_v: NpArrayEdgesFloat, vol: float, w: NpArrayEdgesFloat
+) -> Tuple[NpArrayEdgesFloat, NpArrayEdgesFloat]:
     """
     Get noise score and the std for each edge
 
@@ -91,8 +92,8 @@ def noisy_scores(
 
 
 def scores_generic_graph(
-    wdegree: np.ndarray, edges: np.ndarray, weights: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray]:
+    wdegree: NpArrayEdgesFloat, edges: NpArrayEdges, weights: NpArrayEdgesFloat
+) -> Tuple[NpArrayEdgesFloat, NpArrayEdgesFloat]:
     """Compute noise corrected edge weights for a sparse graph.
 
     Args:
@@ -127,8 +128,11 @@ def scores_generic_graph(
 
 
 def filter_generic_graph(
-    num_vertices: int, edges: np.ndarray, weights: np.ndarray, param: float = 1.28
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    num_vertices: int,
+    edges: NpArrayEdges,
+    weights: NpArrayEdgesFloat,
+    param: float = 1.28,
+) -> Tuple[NpArrayEdgesIds, NpArrayEdgesFloat, NpArrayEdgesFloat]:
     """Compute noise corrected edge weights for a sparse graph.
 
     Args:
@@ -152,7 +156,9 @@ def filter_generic_graph(
     # check if the graph is complete
     w_adj, adj = construct_sp_matrices(weights, edges, num_vertices)
     w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
-    wdegree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
+    wdegree: NpArrayEdgesFloat = (
+        np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
+    )
 
     scores_uv, std_uv = scores_generic_graph(wdegree, edges, weights)
     ids2erase = cond_edges2erase(scores_uv, std_uv, thresh=param)
@@ -163,9 +169,9 @@ def filter_nx_graph(
     g: Union[nx.Graph, nx.DiGraph],
     param: float = 1.28,
     field: Optional[str] = None,
-    remap_labels=False,
+    remap_labels: bool = False,
     save_scores: bool = False,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> Tuple[NpArrayEdgesIds, NpArrayEdgesFloat, NpArrayEdgesFloat]:
     """Filter edge with high noise score from a networkx graph.
 
     Args:
@@ -224,7 +230,7 @@ def filter_nx_graph(
 
 def filter_ig_graph(
     g: ig.Graph, param: float = 1.28, field: Optional[str] = None
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> Tuple[NpArrayEdgesIds, NpArrayEdgesFloat, NpArrayEdgesFloat]:
     """Filter edge with high noise score from a igraph graph.
 
     Args:

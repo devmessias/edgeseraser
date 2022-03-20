@@ -25,7 +25,10 @@ test:
 	poetry run pytest
 
 mypy:
-	poetry run mypy .
+	poetry run mypy edgeseraser
+
+mypy-strict:
+	mypy edgeseraser --strict | grep "^edgeseraser/"
 
 pre-commit:
 	pre-commit run --all-files

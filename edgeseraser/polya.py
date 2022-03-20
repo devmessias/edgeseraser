@@ -8,6 +8,7 @@ import scipy.stats as stats
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
 from edgeseraser.misc.fast_math import nbbetaln, nbgammaln
 from edgeseraser.misc.matrix import construct_sp_matrices
+from edgeseraser.misc.typing import NpArrayEdges, NpArrayEdgesFloat, NpArrayEdgesIds
 from numba import njit
 from scipy.special import gamma
 
@@ -162,13 +163,13 @@ def polya_cdf(weights, wdegree, degree, a, apt_lvl, eps=1e-20):
 
 def scores_generic_graph(
     num_vertices: int,
-    edges: np.ndarray,
-    weights: np.ndarray,
+    edges: NpArrayEdges,
+    weights: NpArrayEdgesFloat,
     a: float = 1,
     apt_lvl: int = 10,
     is_directed: bool = False,
     eps: float = 1e-20,
-) -> np.ndarray:
+) -> NpArrayEdgesFloat:
     """Compute the probability for each edge using the Pólya-based method for
     a generic weighted graph.
 
@@ -209,7 +210,7 @@ def scores_generic_graph(
     return p
 
 
-def cond_edges2erase(alphas: np.ndarray, thresh: float = 0.1) -> np.ndarray:
+def cond_edges2erase(alphas: NpArrayEdgesFloat, thresh: float = 0.1) -> NpArrayEdgesIds:
     """
     Args:
         alphas: np.array
@@ -227,14 +228,14 @@ def cond_edges2erase(alphas: np.ndarray, thresh: float = 0.1) -> np.ndarray:
 
 def filter_generic_graph(
     num_vertices: int,
-    edges: np.ndarray,
-    weights: np.ndarray,
+    edges: NpArrayEdges,
+    weights: NpArrayEdgesFloat,
     thresh: float = 0.4,
     a: float = 1,
     apt_lvl: int = 10,
     is_directed: bool = False,
     eps: float = 1e-20,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[NpArrayEdgesIds, NpArrayEdgesFloat]:
     """Filter the graph using the Pólya-based method.
 
     Args:
@@ -278,7 +279,7 @@ def filter_nx_graph(
     apt_lvl: int = 10,
     remap_labels: bool = False,
     save_scores: bool = False,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[NpArrayEdgesIds, NpArrayEdgesFloat]:
     """Filter edges from a networkx graph using the Pólya filter.
 
     Parameters:
@@ -330,7 +331,7 @@ def filter_ig_graph(
     field: Optional[str] = None,
     a: float = 2,
     apt_lvl: int = 10,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[NpArrayEdgesIds, NpArrayEdgesFloat]:
     """Filter edges from a networkx graph using the Pólya filter.
 
     Parameters:

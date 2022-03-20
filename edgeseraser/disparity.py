@@ -1,6 +1,6 @@
 import sys
 import warnings
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import igraph as ig
 import networkx as nx
@@ -13,13 +13,17 @@ else:
 
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
 from edgeseraser.misc.matrix import construct_sp_matrices
+from edgeseraser.misc.typing import NpArrayEdges, NpArrayEdgesFloat, NpArrayEdgesIds
 
 warnings.simplefilter("ignore", FutureWarning)
 
 
 def stick_break_scores(
-    wdegree: np.ndarray, degree: np.ndarray, edges: np.ndarray, weights: np.ndarray
-) -> np.ndarray:
+    wdegree: NpArrayEdgesFloat,
+    degree: NpArrayEdgesFloat,
+    edges: NpArrayEdges,
+    weights: NpArrayEdgesFloat,
+) -> NpArrayEdgesFloat:
     """
     Calculate the stick-breaking scores for each edge.
 
@@ -45,7 +49,7 @@ def stick_break_scores(
     return alphas
 
 
-def cond_edges2erase(alphas: np.ndarray, thresh: float = 0.1) -> np.ndarray:
+def cond_edges2erase(alphas: NpArrayEdgesFloat, thresh: float = 0.1) -> NpArrayEdgesIds:
     """
     Args:
         alphas: np.array
@@ -57,17 +61,17 @@ def cond_edges2erase(alphas: np.ndarray, thresh: float = 0.1) -> np.ndarray:
             indices of edges to be erased
 
     """
-    ids2erase = np.argwhere(alphas > thresh).flatten()
+    ids2erase: NpArrayEdgesIds = np.argwhere(alphas > thresh).flatten().astype(np.int64)
     return ids2erase
 
 
 def scores_generic_graph(
     num_vertices: int,
-    edges: np.ndarray,
-    weights: np.ndarray,
+    edges: NpArrayEdges,
+    weights: NpArrayEdgesFloat,
     cond: Literal["or", "both", "out", "in"] = "or",
     is_directed: bool = False,
-) -> np.ndarray:
+) -> NpArrayEdgesFloat:
     """
     Args:
         num_vertices: int
@@ -86,7 +90,10 @@ def scores_generic_graph(
     w_adj, adj = construct_sp_matrices(
         weights, edges, num_vertices, is_directed=is_directed
     )
-    calc_degree = lambda x, i: np.asarray(x.sum(axis=i)).flatten().astype(np.float64)
+
+    def calc_degree(adj: Any, i: int) -> NpArrayEdgesFloat:
+        return np.asarray(adj.sum(axis=i)).flatten().astype(np.float64)
+
     iin = edges[:, 1]
     iout = edges[:, 0]
     wdegree_out = calc_degree(w_adj, 0)[iout]
@@ -110,12 +117,12 @@ def scores_generic_graph(
 
 def filter_generic_graph(
     num_vertices: int,
-    edges: np.ndarray,
-    weights: np.ndarray,
+    edges: NpArrayEdges,
+    weights: NpArrayEdgesFloat,
     thresh: float = 0.8,
     cond: Literal["or", "both", "out", "in"] = "or",
     is_directed: bool = False,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[NpArrayEdgesIds, NpArrayEdgesFloat]:
     """Filter edges from a graph using the disparity filter.
     (Dirichet proccess)
 
@@ -150,7 +157,7 @@ def filter_nx_graph(
     field: Optional[str] = None,
     remap_labels: bool = False,
     save_scores: bool = False,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[NpArrayEdgesIds, NpArrayEdgesFloat]:
     """Filter edges from a networkx graph using the disparity filter.
     (Dirichet proccess)
 
@@ -197,7 +204,7 @@ def filter_ig_graph(
     thresh: float = 0.8,
     cond: Literal["or", "both", "out", "in"] = "or",
     field: Optional[str] = None,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[NpArrayEdgesIds, NpArrayEdgesFloat]:
     """Filter edges from a igraph instance using the disparity filter.
     (Dirichet proccess)
 
