@@ -1,0 +1,3 @@
+from scipy.sparse import isspmatrix as isspmatrix
+
+def laplacian(csgraph, normed: bool = ..., return_diag: bool = ..., use_out_degree: bool = ...): ...

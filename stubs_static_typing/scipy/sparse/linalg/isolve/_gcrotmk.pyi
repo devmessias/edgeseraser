@@ -1,0 +1,3 @@
+from typing import Any
+
+def gcrotmk(A, b, x0: Any | None = ..., tol: float = ..., maxiter: int = ..., M: Any | None = ..., callback: Any | None = ..., m: int = ..., k: Any | None = ..., CU: Any | None = ..., discard_C: bool = ..., truncate: str = ..., atol: Any | None = ...): ...

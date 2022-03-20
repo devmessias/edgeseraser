@@ -1,0 +1,3 @@
+from typing import Any
+
+def norm(x, ord: Any | None = ..., axis: Any | None = ...): ...
