@@ -1,30 +1,24 @@
 import sys
-from typing import NewType, Tuple
+from typing import Dict
 
 import numpy as np
 
 if sys.version_info >= (3, 8):
-    from typing import Literal, TypedDict
+    from typing import TypedDict
 else:
-    from typing_extensions import Literal, TypedDict
+    from typing_extensions import TypedDict
 
 
 class NxOpts(TypedDict):
     is_directed: bool
-    nodelabel2index: dict[str, int]
+    nodelabel2index: Dict[str, int]
 
 
 class IgOpts(TypedDict):
     is_directed: bool
 
 
-AnyLen = NewType("AnyLen", int)
-if sys.version_info >= (3, 9):
-    NpArrayEdges = np.ndarray[Tuple[AnyLen, Literal[2]], np.dtype[np.float_]]
-    NpArrayEdgesFloat = np.ndarray[AnyLen, np.dtype[np.float_]]
-    NpArrayEdgesIds = np.ndarray[AnyLen, np.dtype[np.int_]]
-else:
-    NpArrayEdges = np.ndarray
-    NpArrayEdgesFloat = np.ndarray
-    NpArrayEdgesDataInt = np.ndarray
-    NpArrayEdgesIds = np.ndarray
+NpArrayEdges = np.ndarray
+NpArrayEdgesFloat = np.ndarray
+NpArrayEdgesDataInt = np.ndarray
+NpArrayEdgesIds = np.ndarray
