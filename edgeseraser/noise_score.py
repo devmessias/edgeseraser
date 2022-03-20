@@ -1,13 +1,14 @@
 import warnings
-from typing import Optional, Tuple, TypeVar
+from typing import Optional, Tuple, Union
 
 import numpy as np
+import networkx as nx
+import igraph as ig
 import scipy.sparse as sp  # type: ignore
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
+from edgeseraser.misc.matrix import construct_sp_matrices
 
 warnings.simplefilter("ignore", FutureWarning)
-
-NpOrFloat = TypeVar("NpOrFloat", np.ndarray, float)
 
 
 def cond_edges2erase(
@@ -34,8 +35,8 @@ def cond_edges2erase(
 
 
 def noisy_scores(
-    st_u: NpOrFloat, st_v: NpOrFloat, vol: float, w: NpOrFloat
-) -> Tuple[NpOrFloat, NpOrFloat]:
+    st_u: np.ndarray, st_v: np.ndarray, vol: float, w: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Get noise score and the std for each edge
 
@@ -148,6 +149,10 @@ def filter_generic_graph(
         -   standard deviation of noise score for each edge
 
     """
+    # check if the graph is complete
+    w_adj, adj = construct_sp_matrices(
+        weights, edges, num_vertices
+    ) 
     w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
     wdegree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
 
@@ -157,7 +162,9 @@ def filter_generic_graph(
 
 
 def filter_nx_graph(
-    g, param: float = 1.28, field: Optional[str] = None, remap_labels=False
+    g: Union[nx.Graph, nx.DiGraph],
+    param: float = 1.28, field: Optional[str] = None, remap_labels=False,
+    save_scores: bool = False
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Filter edge with high noise score from a networkx graph.
 
@@ -172,6 +179,8 @@ def filter_nx_graph(
             Edge field to be used for filtering.
         remap_labels: bool (default: False)
             If True, the labels of the graph will be remapped to consecutive
+        save_scores: bool (default: False)
+            If True, the noise scores will be saved in the graph.
     Returns:
         (np.array, np.array, np.array)
         -   indices of edges erased
@@ -194,13 +203,19 @@ def filter_nx_graph(
     ids2erase, scores_uv, std_uv = filter_generic_graph(
         num_vertices, edges, weights, param=param
     )
+    if save_scores:
+        nx.set_edge_attributes(g, {
+            (u, v): {"score": score, "std": std, "score-std": r}
+            for u, v, score, std, r in zip(
+                edges[:, 0], edges[:, 1], scores_uv, std_uv, scores_uv-param*std_uv)
+        })
     nx_erase(g, edges[ids2erase], opts)
 
     return ids2erase, scores_uv, std_uv
 
 
 def filter_ig_graph(
-    g, param: float = 1.28, field: Optional[str] = None
+    g: ig.Graph, param: float = 1.28, field: Optional[str] = None
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Filter edge with high noise score from a igraph graph.
 

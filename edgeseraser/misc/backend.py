@@ -1,11 +1,12 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import networkx as nx
+import igraph as ig
 import numpy as np
 
 
 def nx_extract(
-    g, remap_labels: bool = False, field: Optional[str] = None
+    g: Union[nx.Graph, nx.DiGraph], remap_labels: bool = False, field: Optional[str] = None
 ) -> Tuple[np.ndarray, np.ndarray, int, dict]:
     is_directed = g.is_directed()
     if is_directed:
@@ -31,10 +32,11 @@ def nx_extract(
     assert edges.shape[0] > 0, "Graph is empty"
     weights = edges[:, 2].astype(np.float64)
     edges = edges[:, :2].astype(np.int64)
+    #edges = NpArrayEdges(edges)
     return edges, weights, num_vertices, opts
 
 
-def nx_erase(g, edges2erase, opts):
+def nx_erase(g: Union[nx.Graph, nx.DiGraph], edges2erase, opts):
     g.remove_edges_from([(e[0], e[1]) for e in edges2erase])
     nodelabel2index = opts.get("nodelabel2index")
     if nodelabel2index:
@@ -44,7 +46,7 @@ def nx_erase(g, edges2erase, opts):
 
 
 def ig_extract(
-    g,
+    g: ig.Graph,
     field: Optional[str] = None,
 ) -> Tuple[np.ndarray, np.ndarray, int, dict]:
     is_directed = g.is_directed()
@@ -62,8 +64,9 @@ def ig_extract(
         weights = np.ones(edges.shape[0])
     else:
         weights = np.array(g.es[field]).astype(np.float64)
+    #edges = np.ndarray(edges)
     return edges, weights, num_vertices, opts
 
 
-def ig_erase(g, ids2erase):
+def ig_erase(g: ig.Graph, ids2erase: np.ndarray):
     g.delete_edges(ids2erase)

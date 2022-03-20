@@ -1,13 +1,15 @@
 import sys
 import warnings
-from typing import Optional, Tuple
+
+import numpy as np
+import networkx as nx
+import igraph as ig
+from typing import Optional, Tuple, Union
 
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
-
-import numpy as np
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
 from edgeseraser.misc.matrix import construct_sp_matrices
 
@@ -141,11 +143,12 @@ def filter_generic_graph(
 
 
 def filter_nx_graph(
-    g,
+    g: Union[nx.Graph, nx.DiGraph],
     thresh: float = 0.8,
     cond: Literal["or", "both", "out", "in"] = "or",
     field: Optional[str] = None,
     remap_labels: bool = False,
+    save_scores: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Filter edges from a networkx graph using the disparity filter.
     (Dirichet proccess)
@@ -161,6 +164,8 @@ def filter_nx_graph(
             edge weight field
         remap_labels: bool
             if True, the labels of the graph will be remapped to consecutive integers
+        save_scores: bool (default: False)
+            if True, the scores of the edges will be saved in the graph attribute
     Returns:
         (np.array, np.array)
         -  indices of edges erased
@@ -177,12 +182,17 @@ def filter_nx_graph(
         is_directed=opts["is_directed"],
         thresh=thresh,
     )
+    if save_scores:
+        nx.set_edge_attributes(g, {
+            (u, v): {"alpha": a}
+            for u, v, a in zip(edges[:, 0], edges[:, 1], alphas)
+        })
     nx_erase(g, edges[ids2erase], opts)
     return ids2erase, alphas
 
 
 def filter_ig_graph(
-    g,
+    g: ig.Graph,
     thresh: float = 0.8,
     cond: Literal["or", "both", "out", "in"] = "or",
     field: Optional[str] = None,

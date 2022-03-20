@@ -1,13 +1,15 @@
 import warnings
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import scipy.stats as stats
+from numba import njit
+import networkx as nx
+import igraph as ig
+from scipy.special import gamma
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
 from edgeseraser.misc.fast_math import nbbetaln, nbgammaln
 from edgeseraser.misc.matrix import construct_sp_matrices
-from numba import njit
-from scipy.special import gamma
 
 warnings.simplefilter("ignore", FutureWarning)
 
@@ -269,12 +271,13 @@ def filter_generic_graph(
 
 
 def filter_nx_graph(
-    g,
+    g: Union[nx.Graph, nx.DiGraph],
     thresh: float = 0.5,
     field: Optional[str] = None,
     a: float = 2,
     apt_lvl: int = 10,
     remap_labels: bool = False,
+    save_scores: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Filter edges from a networkx graph using the Pólya filter.
 
@@ -288,6 +291,8 @@ def filter_nx_graph(
         apt_lvl: int
         remap_labels: bool
             If True, the labels of the nodes are remapped to consecutive integers.
+        save_scores: bool (default: False)
+            If True, the scores of the edges are saved in the graph.
 
     Returns:
         (np.array, np.array)
@@ -306,13 +311,18 @@ def filter_nx_graph(
         apt_lvl=apt_lvl,
         thresh=thresh,
     )
+    if save_scores:
+        nx.set_edge_attributes(g, {
+            (u, v): {"prob": prob}
+            for u, v, prob in zip(edges[:, 0], edges[:, 1], probs)
+        })
 
     nx_erase(g, edges[ids2erase], opts)
     return ids2erase, probs
 
 
 def filter_ig_graph(
-    g,
+    g: ig.Graph,
     thresh: float = 0.5,
     field: Optional[str] = None,
     a: float = 2,
