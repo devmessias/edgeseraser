@@ -1,15 +1,15 @@
 import warnings
 from typing import Optional, Tuple, Union
 
+import igraph as ig
+import networkx as nx
 import numpy as np
 import scipy.stats as stats
-from numba import njit
-import networkx as nx
-import igraph as ig
-from scipy.special import gamma
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
 from edgeseraser.misc.fast_math import nbbetaln, nbgammaln
 from edgeseraser.misc.matrix import construct_sp_matrices
+from numba import njit
+from scipy.special import gamma
 
 warnings.simplefilter("ignore", FutureWarning)
 
@@ -312,10 +312,13 @@ def filter_nx_graph(
         thresh=thresh,
     )
     if save_scores:
-        nx.set_edge_attributes(g, {
-            (u, v): {"prob": prob}
-            for u, v, prob in zip(edges[:, 0], edges[:, 1], probs)
-        })
+        nx.set_edge_attributes(
+            g,
+            {
+                (u, v): {"prob": prob}
+                for u, v, prob in zip(edges[:, 0], edges[:, 1], probs)
+            },
+        )
 
     nx_erase(g, edges[ids2erase], opts)
     return ids2erase, probs

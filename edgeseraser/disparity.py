@@ -1,15 +1,16 @@
 import sys
 import warnings
-
-import numpy as np
-import networkx as nx
-import igraph as ig
 from typing import Optional, Tuple, Union
+
+import igraph as ig
+import networkx as nx
+import numpy as np
 
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
+
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
 from edgeseraser.misc.matrix import construct_sp_matrices
 
@@ -183,10 +184,10 @@ def filter_nx_graph(
         thresh=thresh,
     )
     if save_scores:
-        nx.set_edge_attributes(g, {
-            (u, v): {"alpha": a}
-            for u, v, a in zip(edges[:, 0], edges[:, 1], alphas)
-        })
+        nx.set_edge_attributes(
+            g,
+            {(u, v): {"alpha": a} for u, v, a in zip(edges[:, 0], edges[:, 1], alphas)},
+        )
     nx_erase(g, edges[ids2erase], opts)
     return ids2erase, alphas
 

@@ -1,12 +1,14 @@
 from typing import Optional, Tuple, Union
 
-import networkx as nx
 import igraph as ig
+import networkx as nx
 import numpy as np
 
 
 def nx_extract(
-    g: Union[nx.Graph, nx.DiGraph], remap_labels: bool = False, field: Optional[str] = None
+    g: Union[nx.Graph, nx.DiGraph],
+    remap_labels: bool = False,
+    field: Optional[str] = None,
 ) -> Tuple[np.ndarray, np.ndarray, int, dict]:
     is_directed = g.is_directed()
     if is_directed:
@@ -32,7 +34,7 @@ def nx_extract(
     assert edges.shape[0] > 0, "Graph is empty"
     weights = edges[:, 2].astype(np.float64)
     edges = edges[:, :2].astype(np.int64)
-    #edges = NpArrayEdges(edges)
+    # edges = NpArrayEdges(edges)
     return edges, weights, num_vertices, opts
 
 
@@ -64,7 +66,7 @@ def ig_extract(
         weights = np.ones(edges.shape[0])
     else:
         weights = np.array(g.es[field]).astype(np.float64)
-    #edges = np.ndarray(edges)
+    # edges = np.ndarray(edges)
     return edges, weights, num_vertices, opts
 
 

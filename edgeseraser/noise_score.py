@@ -1,9 +1,9 @@
 import warnings
 from typing import Optional, Tuple, Union
 
-import numpy as np
-import networkx as nx
 import igraph as ig
+import networkx as nx
+import numpy as np
 import scipy.sparse as sp  # type: ignore
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
 from edgeseraser.misc.matrix import construct_sp_matrices
@@ -150,9 +150,7 @@ def filter_generic_graph(
 
     """
     # check if the graph is complete
-    w_adj, adj = construct_sp_matrices(
-        weights, edges, num_vertices
-    ) 
+    w_adj, adj = construct_sp_matrices(weights, edges, num_vertices)
     w_adj = sp.csr_matrix((weights, edges.T), shape=(num_vertices, num_vertices))
     wdegree = np.asarray(w_adj.sum(axis=1)).flatten().astype(np.float64)
 
@@ -163,8 +161,10 @@ def filter_generic_graph(
 
 def filter_nx_graph(
     g: Union[nx.Graph, nx.DiGraph],
-    param: float = 1.28, field: Optional[str] = None, remap_labels=False,
-    save_scores: bool = False
+    param: float = 1.28,
+    field: Optional[str] = None,
+    remap_labels=False,
+    save_scores: bool = False,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Filter edge with high noise score from a networkx graph.
 
@@ -204,11 +204,19 @@ def filter_nx_graph(
         num_vertices, edges, weights, param=param
     )
     if save_scores:
-        nx.set_edge_attributes(g, {
-            (u, v): {"score": score, "std": std, "score-std": r}
-            for u, v, score, std, r in zip(
-                edges[:, 0], edges[:, 1], scores_uv, std_uv, scores_uv-param*std_uv)
-        })
+        nx.set_edge_attributes(
+            g,
+            {
+                (u, v): {"score": score, "std": std, "score-std": r}
+                for u, v, score, std, r in zip(
+                    edges[:, 0],
+                    edges[:, 1],
+                    scores_uv,
+                    std_uv,
+                    scores_uv - param * std_uv,
+                )
+            },
+        )
     nx_erase(g, edges[ids2erase], opts)
 
     return ids2erase, scores_uv, std_uv
