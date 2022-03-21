@@ -21,7 +21,7 @@ update:
 	poetry install
 
 # Anything related to how health our codebase is
-tests:
+pytests:
 	poetry run pytest --benchmark-skip
 
 mypy:
