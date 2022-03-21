@@ -2,6 +2,7 @@ import sys
 from typing import Dict
 
 import numpy as np
+import numpy.typing as npt
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict
@@ -18,7 +19,8 @@ class IgOpts(TypedDict):
     is_directed: bool
 
 
-NpArrayEdges = np.ndarray
-NpArrayEdgesFloat = np.ndarray
-NpArrayEdgesDataInt = np.ndarray
-NpArrayEdgesIds = np.ndarray
+NpArrayEdges = npt.NDArray[np.int_]
+NpArrayEdgesFloat = npt.NDArray[np.float_]
+NpArrayEdgesBool = npt.NDArray[np.bool_]
+NpArrayEdgesIds = npt.NDArray[np.int_]
+NpArrayFloat = npt.NDArray[np.float_]

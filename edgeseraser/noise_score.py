@@ -210,6 +210,7 @@ def filter_nx_graph(
         num_vertices, edges, weights, param=param
     )
     if save_scores:
+        params: NpArrayEdgesFloat = scores_uv - param * std_uv
         nx.set_edge_attributes(
             g,
             {
@@ -219,7 +220,7 @@ def filter_nx_graph(
                     edges[:, 1],
                     scores_uv,
                     std_uv,
-                    scores_uv - param * std_uv,
+                    params,
                 )
             },
         )

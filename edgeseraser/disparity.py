@@ -13,7 +13,12 @@ else:
 
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
 from edgeseraser.misc.matrix import construct_sp_matrices
-from edgeseraser.misc.typing import NpArrayEdges, NpArrayEdgesFloat, NpArrayEdgesIds
+from edgeseraser.misc.typing import (
+    NpArrayEdges,
+    NpArrayEdgesBool,
+    NpArrayEdgesFloat,
+    NpArrayEdgesIds,
+)
 
 warnings.simplefilter("ignore", FutureWarning)
 
@@ -42,7 +47,7 @@ def stick_break_scores(
             **alphas** stick-breaking scores for each edge
     """
     alphas = np.ones(edges.shape[0])
-    ids_d1 = degree > 1
+    ids_d1: NpArrayEdgesBool = degree > 1
     st = weights[ids_d1] / wdegree[ids_d1]
     assert np.all(st <= 1)
     alphas[ids_d1] = (1 - st) ** (degree[ids_d1] - 1)

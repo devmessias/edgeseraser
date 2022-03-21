@@ -8,16 +8,22 @@ import scipy.stats as stats
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
 from edgeseraser.misc.fast_math import nbbetaln, nbgammaln
 from edgeseraser.misc.matrix import construct_sp_matrices
-from edgeseraser.misc.typing import NpArrayEdges, NpArrayEdgesFloat, NpArrayEdgesIds
+from edgeseraser.misc.typing import (
+    NpArrayEdges,
+    NpArrayEdgesBool,
+    NpArrayEdgesFloat,
+    NpArrayEdgesIds,
+)
 from numba import njit
+from scipy.sparse import csr_matrix
 from scipy.special import gamma
 
 warnings.simplefilter("ignore", FutureWarning)
 
 
 def compute_polya_pdf_approx(
-    w: np.ndarray, n: np.ndarray, k, a: float = 0.0
-) -> np.ndarray:
+    w: NpArrayEdgesFloat, n: NpArrayEdgesFloat, k: NpArrayEdgesFloat, a: float = 0.0
+) -> NpArrayEdgesFloat:
     """
 
     Args:
@@ -32,10 +38,9 @@ def compute_polya_pdf_approx(
 
     """
     if a == 0.0:
-        prob_success = 1.0 / k
-        p = stats.binom.cdf(w, n, prob_success)
+        prob_success: NpArrayEdgesFloat = 1.0 / k
+        p: NpArrayEdgesFloat = stats.binom.cdf(w, n, prob_success)
         return p
-
     a_inv = 1 / a
     b = (k - 1) * a_inv
     if a == 1.0:
@@ -46,8 +51,12 @@ def compute_polya_pdf_approx(
     return p
 
 
-@njit(nopython=True)
-def compute_polya_pdf(w, n, k, a) -> np.ndarray:
+@njit(
+    nogil=True,
+)
+def compute_polya_pdf(
+    s, w: NpArrayEdgesFloat, n: NpArrayEdgesFloat, k: NpArrayEdgesFloat, a: float
+) -> NpArrayEdgesFloat:
     """
 
     Args:
@@ -64,22 +73,26 @@ def compute_polya_pdf(w, n, k, a) -> np.ndarray:
     """
     a_inv = 1 / a
     b = (k - 1) * a_inv
-    ones = np.ones_like(w)
-    p = np.exp(
-        nbgammaln(n + ones)
-        + nbbetaln(w + a_inv, n - w + b)
-        - nbgammaln(w + ones)
-        - nbgammaln(n - w + ones)
-        - nbbetaln(a_inv * ones, b * ones)
+    ones = np.ones(s, dtype=np.float64)
+    p: NpArrayEdgesFloat = np.exp(
+        nbgammaln(n + ones, s)
+        + nbbetaln(w + a_inv, n - w + b, s)
+        - nbgammaln(w + ones, s)
+        - nbgammaln(n - w + ones, s)
+        - nbbetaln(a_inv * ones, b * ones, s)
     )
 
     return p
 
 
-@njit(fastmath=True, error_model="numpy")
+@njit(fastmath=True, nogil=True, error_model="numpy")
 def integer_cdf(
-    wdegree: np.ndarray, degree: np.ndarray, a: float, weights: np.ndarray
-) -> np.ndarray:
+    n: int,
+    wdegree: NpArrayEdgesFloat,
+    degree: NpArrayEdgesFloat,
+    a: float,
+    weights: NpArrayEdgesFloat,
+) -> NpArrayEdgesFloat:
     """Compute the prob of the integer weight distribution using numba JIT and parallelization.
 
     Args:
@@ -95,19 +108,27 @@ def integer_cdf(
             Probability values for each edge with integer weights
 
     """
-    p = np.zeros(wdegree.shape, dtype=np.float64)
-    for i in range(wdegree.shape[0]):
+    p = np.zeros(n, dtype=np.float64)
+    for i in range(n):
         wi = int(weights[i])
         if wi < 2:
             p[i] = 0.0
             continue
         x = np.arange(0, wi)
-        polya_pdf = compute_polya_pdf(x, wdegree[i], degree[i], a)
+        polya_pdf = compute_polya_pdf(wi, x, wdegree[i], degree[i], a)
         p[i] = 1 - np.sum(polya_pdf)
     return p
 
 
-def polya_cdf(weights, wdegree, degree, a, apt_lvl, eps=1e-20):
+def polya_cdf(
+    weights: NpArrayEdgesFloat,
+    wdegree: NpArrayEdgesFloat,
+    degree: NpArrayEdgesFloat,
+    a: float,
+    apt_lvl: float,
+    eps: float = 1e-20,
+    check_consistency: bool = False,
+) -> NpArrayEdgesFloat:
     """
     Args:
         weights: np.array
@@ -119,12 +140,13 @@ def polya_cdf(weights, wdegree, degree, a, apt_lvl, eps=1e-20):
         a: float
         apt_lvl: int
         eps: float
+        check_consistency: bool (default: False)
     Returns:
         np.array:
             Probability values for each edge
 
     """
-    k_high = degree > 1
+    k_high: NpArrayEdgesBool = degree > 1
     k = degree[k_high]
     w = weights[k_high]
     s = wdegree[k_high]
@@ -135,9 +157,9 @@ def polya_cdf(weights, wdegree, degree, a, apt_lvl, eps=1e-20):
 
     a_inv = 1.0 / a
     b = (k - 1) * a_inv
-    diff_strength = s - w
-
-    assert np.all(diff_strength >= 0)
+    if check_consistency:
+        diff_strength = s - w
+        assert np.all(diff_strength >= 0)
     idx = (
         (s - w >= apt_lvl * (b + 1))
         * (w >= apt_lvl * np.maximum(a_inv, 1))
@@ -151,10 +173,11 @@ def polya_cdf(weights, wdegree, degree, a, apt_lvl, eps=1e-20):
             w[idx_true], s[idx_true], k[idx_true], a=a
         )
     non_zero_idx = np.argwhere(~idx).flatten()
-    non_zero_idx = [i for i in non_zero_idx if s[i] > 0 and k[i] > 1]
+    non_zero_idx = non_zero_idx[(s[~idx] > 0) & (k[~idx] > 1)]
     if len(non_zero_idx) > 0:
+        n = len(non_zero_idx)
         p[non_zero_idx] = integer_cdf(
-            s[non_zero_idx], k[non_zero_idx], a, w[non_zero_idx]
+            n, s[non_zero_idx], k[non_zero_idx], a, w[non_zero_idx]
         )
 
     scores[k_high] = p
@@ -193,7 +216,9 @@ def scores_generic_graph(
         weights, edges, num_vertices, is_directed=is_directed
     )
 
-    calc_degree = lambda x, i: np.asarray(x.sum(axis=i)).flatten().astype(np.float64)
+    def calc_degree(x: csr_matrix, i: int) -> NpArrayEdgesFloat:
+        return np.asarray(x.sum(axis=i)).flatten()
+
     ids_out = edges[:, 0]
     ids_in = edges[:, 1]
     wdegree_out = calc_degree(w_adj, 1)[ids_out]
@@ -206,7 +231,7 @@ def scores_generic_graph(
         apt_lvl = 0
     p_in = polya_cdf(weights, wdegree_in, degree_in, a, apt_lvl)
     p_out = polya_cdf(weights, wdegree_out, degree_out, a, apt_lvl)
-    p = np.minimum(p_in, p_out)
+    p: NpArrayEdgesFloat = np.minimum(p_in, p_out)
     return p
 
 
@@ -222,7 +247,7 @@ def cond_edges2erase(alphas: NpArrayEdgesFloat, thresh: float = 0.1) -> NpArrayE
             indices of edges to be erased
 
     """
-    ids2erase = np.argwhere(alphas > thresh).flatten()
+    ids2erase: NpArrayEdgesIds = np.argwhere(alphas > thresh).flatten().astype("int64")
     return ids2erase
 
 
