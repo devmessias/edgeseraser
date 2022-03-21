@@ -31,14 +31,10 @@ mypy-strict:
 	mypy edgeseraser --strict | grep "^edgeseraser/"
 
 benchmark:
-	pytest -svv tests/ --benchmark-histogram --benchmark-autosave --benchmark-only
-	mv *.svg .benchmarks/
-	cd .benchmarks \
-		&& convert *.svg *.png \
-		&& rm *.svg
+	pytest -svv tests/test_fast*  --benchmark-autosave --benchmark-only --benchmark-save=$(name)
 
 benchmark-compare:
-	py.test-benchmark-compare
+	py.test-benchmark compare --csv=".benchmarks/${csv}"
 
 pre-commit:
 	pre-commit run --all-files
