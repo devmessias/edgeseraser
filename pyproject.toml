@@ -60,6 +60,7 @@ pytest = "*"
 pytest-cov = "*"
 python-kacl = "*"
 pyupgrade = "*"
+pytest-benchmark =  {extras = ["histogram"], version = "*"}
 tryceratops = "*"
 
 [build-system]
@@ -77,5 +78,4 @@ include = '\.pyi?$'
 
 [tool.mypy]
 mypy_path = "./stubs_static_typing"
-
 show_error_codes = true

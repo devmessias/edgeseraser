@@ -21,14 +21,24 @@ update:
 	poetry install
 
 # Anything related to how health our codebase is
-test:
-	poetry run pytest
+tests:
+	poetry run pytest --benchmark-skip
 
 mypy:
 	poetry run mypy edgeseraser
 
 mypy-strict:
 	mypy edgeseraser --strict | grep "^edgeseraser/"
+
+benchmark:
+	pytest -svv tests/ --benchmark-histogram --benchmark-autosave --benchmark-only
+	mv *.svg .benchmarks/
+	cd .benchmarks \
+		&& convert *.svg *.png \
+		&& rm *.svg
+
+benchmark-compare:
+	py.test-benchmark-compare
 
 pre-commit:
 	pre-commit run --all-files
