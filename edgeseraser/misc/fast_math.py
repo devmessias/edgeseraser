@@ -5,7 +5,7 @@ from numba import njit, prange
 
 
 @njit(fastmath=True, error_model="numpy", parallel=True)
-def nbgammaln(z: np.ndarray) -> np.ndarray:
+def nbgammaln(z: np.ndarray, n: int) -> np.ndarray:
     """Compute the log of the gamma function.
 
     Algorithm extracted from **Numerical Recipes in C**[1] chapter 6.1
@@ -38,8 +38,8 @@ def nbgammaln(z: np.ndarray) -> np.ndarray:
         ]
     )
 
-    out = np.zeros(z.shape[0])
-    for i in prange(z.shape[0]):
+    out = np.zeros(n)
+    for i in prange(n):
         y = z[i]
         tmp = z[i] + 5.24218750000000000
         tmp = (z[i] + 0.5) * np.log(tmp) - tmp
@@ -53,7 +53,7 @@ def nbgammaln(z: np.ndarray) -> np.ndarray:
 
 
 @njit(fastmath=True, error_model="numpy")
-def nbbeta(z, w):
+def nbbeta(z, w, n):
     """Compute the beta function.
 
     Algorithm extracted from **Numerical Recipes in C**[1] chapter 6.1
@@ -68,13 +68,13 @@ def nbbeta(z, w):
         np.array
 
     """
-    arg = nbgammaln(z) + nbgammaln(w) - nbgammaln(z + w)
+    arg = nbgammaln(z, n) + nbgammaln(w, n) - nbgammaln(z + w, n)
     beta = np.exp(arg)
     return beta
 
 
 @njit(fastmath=True, error_model="numpy")
-def nbbetaln(z, w):
+def nbbetaln(z, w, n):
     """Compute the log of the beta function.
 
     We know
@@ -88,7 +88,7 @@ def nbbetaln(z, w):
         np.array
 
     """
-    beta = nbbeta(z, w)
+    beta = nbbeta(z, w, n)
     out = np.log(np.abs(beta))
 
     return out
