@@ -1,6 +1,7 @@
 import igraph as ig
 import networkx as nx
 import numpy as np
+import pytest
 from edgeseraser import disparity, polya
 from edgeseraser.misc import backend
 
@@ -55,3 +56,49 @@ def test_integer_weights():
     polya.scores_generic_graph(
         num_vertices, edges, weights, a=2, is_directed=opts["is_directed"]
     )
+
+
+def large_graph_for_testing(n):
+    g = ig.Graph.Erdos_Renyi(int(n), 3 / n, directed=False)
+    g = g.components(mode="weak").giant()
+    edges, _, num_vertices, opts = backend.ig_extract(g)
+    return edges, num_vertices, opts
+
+
+@pytest.mark.parametrize("n", [(10e4), (10e3)])
+@pytest.mark.benchmark(group="Polya-Urn")
+def test_polya_int_weights_perf(benchmark, n):
+    edges, num_vertices, opts = large_graph_for_testing(n)
+    weights = np.random.randint(1, 40, len(edges)).astype(np.float64)
+    benchmark.extra_info["Num Edges"] = len(edges)
+    benchmark.extra_info["Num_vertices"] = num_vertices
+    assert np.mod(weights, 1).sum() == 0
+    result = benchmark.pedantic(
+        polya.scores_generic_graph,
+        kwargs={
+            "num_vertices": num_vertices,
+            "edges": edges,
+            "weights": weights,
+            "is_directed": opts["is_directed"],
+        },
+    )
+    assert np.all((result >= 0) & (result <= 1))
+
+
+@pytest.mark.parametrize("n", [(10e4), (10e3)])
+@pytest.mark.benchmark(group="Polya-Urn")
+def test_polya_float_weights_perf(benchmark, n):
+    edges, num_vertices, opts = large_graph_for_testing(n)
+    benchmark.extra_info["Num Edges"] = len(edges)
+    benchmark.extra_info["Num_vertices"] = num_vertices
+    weights = np.random.uniform(0, 1, len(edges))
+    result = benchmark.pedantic(
+        polya.scores_generic_graph,
+        kwargs={
+            "num_vertices": num_vertices,
+            "edges": edges,
+            "weights": weights,
+            "is_directed": opts["is_directed"],
+        },
+    )
+    assert np.all((result >= 0) & (result <= 1))

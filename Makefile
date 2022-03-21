@@ -31,7 +31,7 @@ mypy-strict:
 	mypy edgeseraser --strict | grep "^edgeseraser/"
 
 benchmark:
-	pytest -svv tests/test_fast*  --benchmark-autosave --benchmark-only --benchmark-save=$(name)
+	pytest -svv tests  --benchmark-autosave --benchmark-only --benchmark-save=$(name)
 
 benchmark-compare:
 	py.test-benchmark compare --csv=".benchmarks/${csv}"

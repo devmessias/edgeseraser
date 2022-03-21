@@ -3,7 +3,7 @@ import pytest
 from edgeseraser.misc.fast_math import nbbetaln, nbgammaln
 from scipy.special import betaln, gammaln
 
-SIZE_BENCHMARK = 10000000
+SIZE_BENCHMARK = 1000000
 
 
 def test_gammaln():
@@ -32,14 +32,32 @@ def test_betaln():
     assert np.allclose(betaln(z0, w0), nbbetaln(z0, w0, s))
 
 
-@pytest.mark.benchmark(group="gamma numba")
-def test_gamma_scipy(benchmark):
+@pytest.mark.benchmark(group="GammaLn numba vs scipy")
+def test_gammaln_scipy_perf(benchmark):
+    benchmark.extra_info["size array"] = SIZE_BENCHMARK
     zs = np.linspace(0.001, 100, SIZE_BENCHMARK)
     benchmark(gammaln, zs)
 
 
-@pytest.mark.benchmark(group="gamma numba")
-def test_gamma_numba(benchmark):
+@pytest.mark.benchmark(group="GammaLn numba vs scipy")
+def test_gammaln_numba_perf(benchmark):
+    benchmark.extra_info["size array"] = SIZE_BENCHMARK
     zs = np.linspace(0.001, 100, SIZE_BENCHMARK)
     s = zs.shape[0]
     benchmark(nbgammaln, zs, s)
+
+
+@pytest.mark.benchmark(group="BetaLn numba vs scipy")
+def test_betaln_scipy_perf(benchmark):
+    benchmark.extra_info["size array"] = SIZE_BENCHMARK
+    zs = np.linspace(0.001, 100, SIZE_BENCHMARK)
+    ws = np.linspace(0.001, 100, SIZE_BENCHMARK)
+    benchmark(betaln, zs, ws)
+
+
+@pytest.mark.benchmark(group="BetaLn numba vs scipy")
+def test_betaln_numba_perf(benchmark):
+    benchmark.extra_info["size array"] = SIZE_BENCHMARK
+    zs = np.linspace(0.001, 100, SIZE_BENCHMARK)
+    ws = np.linspace(0.001, 100, SIZE_BENCHMARK)
+    benchmark(nbbetaln, zs, ws, SIZE_BENCHMARK)
