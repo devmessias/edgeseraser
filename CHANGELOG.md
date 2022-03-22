@@ -5,7 +5,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 
 ## [Unreleased]
+### Added
+- Static type analysis
+  - stubs for networkx, igraph and scipy csr_matrix
+  - types for Pólya-Urn method
+- Automatic benchmarking with `pytest-benchmark`
+- Numba support for special functions GammaLn and BetaLn
+- Python's `lru_cache` for memoization inside of Pólya-Urn
+- NumbaPolya cache for memoization using JIT-classes
+  - This gave a significant speedup for the Pólya-Urn method, approx 80%
 
+### Fixed
+
+- Pólya-Urn performance issues
+### Changed
+-   Args for Pólya-Urn method
+-   Makefile targets:
+    -   make tests -> make pytests
+        -   skip all the benchmarks tests
+    -   make benchmark name="{BENCHMARK_NAME}"
+        -   run the benchmarks
+    - github actions now uses the makefile for tests
+-   Return types for all graph filter methods
 ## [0.5.0] - 2022-03-15
 ### Added
 - Pólya-Urn method for integer weighted graphs now uses JIT compilation to
