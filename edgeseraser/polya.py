@@ -1,4 +1,5 @@
 import warnings
+from functools import lru_cache
 from typing import Optional, Tuple, Union
 
 import igraph as ig
@@ -6,7 +7,11 @@ import networkx as nx
 import numpy as np
 import scipy.stats as stats
 from edgeseraser.misc.backend import ig_erase, ig_extract, nx_erase, nx_extract
-from edgeseraser.misc.fast_math import nbbetaln, nbgammaln
+from edgeseraser.misc.fast_math import (
+    NbGammaLnCache,
+    nbbetaln_parallel,
+    nbgammaln_parallel,
+)
 from edgeseraser.misc.matrix import construct_sp_matrices
 from edgeseraser.misc.typing import (
     NpArrayEdges,
@@ -15,6 +20,11 @@ from edgeseraser.misc.typing import (
     NpArrayEdgesIds,
 )
 from numba import njit
+from numba.experimental import jitclass
+from numba.typed import Dict as nb_Dict
+from numba.types import DictType as nb_DictType
+from numba.types import float64 as nb_float64
+from numba.types import int64 as nb_int64
 from scipy.sparse import csr_matrix
 from scipy.special import gamma
 
@@ -52,46 +62,139 @@ def compute_polya_pdf_approx(
 
 
 @njit(
+    nb_float64[:](nb_float64[:], nb_float64, nb_float64, nb_float64),
     nogil=True,
 )
 def compute_polya_pdf(
-    s, w: NpArrayEdgesFloat, n: NpArrayEdgesFloat, k: NpArrayEdgesFloat, a: float
+    x: NpArrayEdgesFloat, w: NpArrayEdgesFloat, k: NpArrayEdgesFloat, a: float
 ) -> NpArrayEdgesFloat:
     """
 
     Args:
-        w: np.array
-            edge weights
-        n: np.array
-            number of samples
-        k: np.array
+        x: np.array
+            array of integer weights
+        w: float
+            weighted degree
+        k: float
             degree
-        a: float (default: 0)
+        a: float
     Returns:
         np.array
 
     """
-    a_inv = 1 / a
-    b = (k - 1) * a_inv
-    ones = np.ones(s, dtype=np.float64)
+    a_inv = 1.0 / a
+    b = (k - 1.0) * a_inv
+    ones = np.ones(x.shape[0], dtype=np.float64)
     p: NpArrayEdgesFloat = np.exp(
-        nbgammaln(n + ones, s)
-        + nbbetaln(w + a_inv, n - w + b, s)
-        - nbgammaln(w + ones, s)
-        - nbgammaln(n - w + ones, s)
-        - nbbetaln(a_inv * ones, b * ones, s)
+        nbgammaln_parallel(w + ones)
+        + nbbetaln_parallel(x + a_inv, w - x + b)
+        - nbgammaln_parallel(x + ones)
+        - nbgammaln_parallel(w - x + ones)
+        - nbbetaln_parallel(a_inv * ones, b * ones)
     )
 
     return p
 
 
+@lru_cache
+def polya_cdf_lru_py_native(size, w, k, a):
+    """Compute the Pólya-Urn for integer weights
+
+    The results are cached using python's lru_cache.
+
+    Args:
+        size: int
+            size of the distribution
+        w: float
+            weighted degree
+        k: float
+            degree
+        a: float
+    Returns:
+        float:
+            between 0 and 1
+
+    """
+    x = np.arange(0, size, dtype=np.float64)
+    polya_pdf = compute_polya_pdf(x, w, k, a)
+    return 1 - np.sum(polya_pdf)
+
+
+@njit(nb_int64(nb_int64, nb_int64))
+def szuszik(a, b):
+    if a != max(a, b):
+        map_key = pow(b, 2) + a
+    else:
+        map_key = pow(a, 2) + a + b
+
+    return map_key
+
+
+@jitclass(
+    {
+        "lw": nb_DictType(nb_int64, nb_float64),
+    }
+)
+class NbComputePolyaCacheSzuszik:
+    def __init__(self):
+        self.lw = nb_Dict.empty(nb_int64, nb_float64)
+
+    def call(self, size, w, k, a):
+
+        ki = int(k)
+        wi = int(w)
+        map_key = szuszik(wi, ki)
+        map_key = szuszik(map_key, size)
+        if map_key not in self.lw:
+            x = np.arange(0, size, dtype=np.float64)
+            polya_pdf = 1 - np.sum(compute_polya_pdf(x, w, k, a))
+            self.lw[map_key] = polya_pdf
+
+        return self.lw[map_key]
+
+
+@jitclass(
+    {
+        "lw": nb_DictType(
+            nb_int64, nb_DictType(nb_int64, nb_DictType(nb_int64, nb_float64))
+        ),
+    }
+)
+class NbComputePolyaCacheDict:
+    def __init__(self):
+        self.lw = nb_Dict.empty(
+            nb_int64, nb_Dict.empty(nb_int64, nb_Dict.empty(nb_int64, nb_float64))
+        )
+
+    def call(self, size, w, k, a):
+        ki = int(k)
+        wi = int(w)
+        size = int(size)
+        compute = True
+        if ki not in self.lw:
+            self.lw[ki] = {wi: {size: 0.0}}
+        else:
+            if wi not in self.lw[ki]:
+                self.lw[ki][wi] = {size: 0.0}
+            else:
+                if size in self.lw[ki][wi]:
+                    compute = False
+
+        if compute:
+            x = np.arange(0, size, dtype=np.float64)
+            polya_pdf = 1 - np.sum(compute_polya_pdf(x, w, k, a))
+            self.lw[ki][wi][size] = polya_pdf
+
+        return self.lw[ki][wi][size]
+
+
 @njit(fastmath=True, nogil=True, error_model="numpy")
-def integer_cdf(
-    n: int,
+def integer_cdf_lru_nb(
     wdegree: NpArrayEdgesFloat,
     degree: NpArrayEdgesFloat,
-    a: float,
     weights: NpArrayEdgesFloat,
+    a: float,
+    cache_obj,
 ) -> NpArrayEdgesFloat:
     """Compute the prob of the integer weight distribution using numba JIT and parallelization.
 
@@ -108,26 +211,160 @@ def integer_cdf(
             Probability values for each edge with integer weights
 
     """
+    n = wdegree.shape[0]
     p = np.zeros(n, dtype=np.float64)
     for i in range(n):
         wi = int(weights[i])
         if wi < 2:
             p[i] = 0.0
             continue
-        x = np.arange(0, wi)
-        polya_pdf = compute_polya_pdf(wi, x, wdegree[i], degree[i], a)
+        wd = wdegree[i]
+        d = degree[i]
+        p[i] = cache_obj.call(wi, wd, d, a)
+    return p
+
+
+@njit(fastmath=True, nogil=True, error_model="numpy")
+def integer_cdf_lru_nb_f(
+    wdegree: NpArrayEdgesFloat,
+    degree: NpArrayEdgesFloat,
+    weights: NpArrayEdgesFloat,
+    a: float,
+    cache_obj,
+) -> NpArrayEdgesFloat:
+    """Compute the prob of the integer weight distribution using numba JIT and parallelization.
+
+    Args:
+        wdegree: np.array
+            edge weighted degrees
+        degree: np.array
+            vertex degrees
+        a: float
+        weights: np.array
+            edge weights
+    Returns:
+        np.array:
+            Probability values for each edge with integer weights
+
+    """
+    a_inv = 1 / a
+    n = wdegree.shape[0]
+    p = np.zeros(n, dtype=np.float64)
+
+    for i in range(n):
+        wi = int(weights[i])
+        if wi < 2:
+            p[i] = 0.0
+            continue
+        wd = wdegree[i]
+        d = degree[i]
+        b = (d - 1.0) * a_inv
+        betaln2 = (
+            cache_obj.callp(a_inv) + cache_obj.callp(b) - cache_obj.callp(a_inv + b)
+        )
+        gammaln1 = cache_obj.callp(wd + 1.0)
+        gammalnbetaln1 = cache_obj.callp(wd + a_inv + b)
+        r = 0.0
+        x = 0.0
+        for _ in range(0, wi):
+            z1 = x + a_inv
+            z2 = wd - x + b
+            z3 = x + 1.0
+            z4 = wd - x + 1.0
+            v1 = cache_obj.callp(z1)
+            v2 = cache_obj.callp(z2)
+            v3 = cache_obj.callp(z3)
+            v4 = cache_obj.callp(z4)
+
+            betaln1 = v1 + v2 - gammalnbetaln1
+            r += np.exp(gammaln1 - v3 - v4 + betaln1 - betaln2)
+            x += 1
+        p[i] = 1 - r
+    return p
+
+
+def integer_cdf_lru_py_native(
+    wdegree: NpArrayEdgesFloat,
+    degree: NpArrayEdgesFloat,
+    weights: NpArrayEdgesFloat,
+    a: float,
+) -> NpArrayEdgesFloat:
+    """Compute the prob of the integer weight distribution using numba JIT and parallelization.
+
+    Args:
+        wdegree: np.array
+            edge weighted degrees
+        degree: np.array
+            vertex degrees
+        weights: np.array
+            edge weights
+        a: float
+    Returns:
+        np.array:
+            Probability values for each edge with integer weights
+
+    """
+    n = wdegree.shape[0]
+    p = np.zeros(n, dtype=np.float64)
+    for i in range(n):
+        wi = int(weights[i])
+        if wi < 2:
+            p[i] = 0.0
+            continue
+        wd = wdegree[i]
+        d = degree[i]
+
+        p[i] = polya_cdf_lru_py_native(wi, wd, d, a)
+    return p
+
+
+@njit(fastmath=True, nogil=True, error_model="numpy")
+def integer_cdf_nb(
+    wdegree: NpArrayEdgesFloat,
+    degree: NpArrayEdgesFloat,
+    weights: NpArrayEdgesFloat,
+    a: float,
+) -> NpArrayEdgesFloat:
+    """Compute the prob of the integer weight distribution using numba JIT and parallelization.
+
+    Args:
+        wdegree: np.array
+            edge weighted degrees
+        degree: np.array
+            vertex degrees
+        a: float
+        weights: np.array
+            edge weights
+    Returns:
+        np.array:
+            Probability values for each edge with integer weights
+
+    """
+    n = wdegree.shape[0]
+    p = np.zeros(n, dtype=np.float64)
+    for i in range(n):
+        wi = int(weights[i])
+        if wi < 2:
+            p[i] = 0.0
+            continue
+        wd = wdegree[i]
+        d = degree[i]
+        x = np.arange(0, wi, dtype=np.float64)
+        polya_pdf = compute_polya_pdf(x, wd, d, a)
         p[i] = 1 - np.sum(polya_pdf)
     return p
 
 
 def polya_cdf(
-    weights: NpArrayEdgesFloat,
     wdegree: NpArrayEdgesFloat,
     degree: NpArrayEdgesFloat,
+    weights: NpArrayEdgesFloat,
     a: float,
     apt_lvl: float,
     eps: float = 1e-20,
     check_consistency: bool = False,
+    optimization="lru-nb",
+    cache_obj=None,
 ) -> NpArrayEdgesFloat:
     """
     Args:
@@ -175,10 +412,31 @@ def polya_cdf(
     non_zero_idx = np.argwhere(~idx).flatten()
     non_zero_idx = non_zero_idx[(s[~idx] > 0) & (k[~idx] > 1)]
     if len(non_zero_idx) > 0:
-        n = len(non_zero_idx)
-        p[non_zero_idx] = integer_cdf(
-            n, s[non_zero_idx], k[non_zero_idx], a, w[non_zero_idx]
-        )
+        if optimization == "lru-nb" or optimization == "lru-nb-szuszik":
+            if cache_obj is None:
+                raise ValueError("Cache object is None")
+            vals = integer_cdf_lru_nb(
+                s[non_zero_idx],
+                k[non_zero_idx],
+                w[non_zero_idx],
+                a=a,
+                cache_obj=cache_obj,
+            )
+        elif optimization == "lru-nbf":
+            vals = integer_cdf_lru_nb_f(
+                s[non_zero_idx],
+                k[non_zero_idx],
+                w[non_zero_idx],
+                a=a,
+                cache_obj=cache_obj,
+            )
+        elif optimization == "lru-py-nb":
+            vals = integer_cdf_lru_py_native(
+                s[non_zero_idx], k[non_zero_idx], w[non_zero_idx], a
+            )
+        elif optimization == "nb":
+            vals = integer_cdf_nb(s[non_zero_idx], k[non_zero_idx], w[non_zero_idx], a)
+        p[non_zero_idx] = vals
 
     scores[k_high] = p
     return scores
@@ -192,6 +450,7 @@ def scores_generic_graph(
     apt_lvl: int = 10,
     is_directed: bool = False,
     eps: float = 1e-20,
+    optimization="lru-nb",
 ) -> NpArrayEdgesFloat:
     """Compute the probability for each edge using the Pólya-based method for
     a generic weighted graph.
@@ -229,8 +488,33 @@ def scores_generic_graph(
     if np.mod(weights, 1).sum() > eps:
         # non integer weights
         apt_lvl = 0
-    p_in = polya_cdf(weights, wdegree_in, degree_in, a, apt_lvl)
-    p_out = polya_cdf(weights, wdegree_out, degree_out, a, apt_lvl)
+    if optimization == "lru-nb":
+        cache_obj = NbComputePolyaCacheDict()
+    elif optimization == "lru-nb-szuszik":
+        cache_obj = NbComputePolyaCacheSzuszik()
+    elif optimization == "lru-nbf":
+        cache_obj = NbGammaLnCache()
+    else:
+        cache_obj = None
+    p_in = polya_cdf(
+        wdegree_in,
+        degree_in,
+        weights,
+        a,
+        apt_lvl,
+        optimization=optimization,
+        cache_obj=cache_obj,
+    )
+    p_out = polya_cdf(
+        wdegree_out,
+        degree_out,
+        weights,
+        a,
+        apt_lvl,
+        optimization=optimization,
+        cache_obj=cache_obj,
+    )
+
     p: NpArrayEdgesFloat = np.minimum(p_in, p_out)
     return p
 
@@ -305,7 +589,7 @@ def filter_nx_graph(
     remap_labels: bool = False,
     save_scores: bool = False,
 ) -> Tuple[NpArrayEdgesIds, NpArrayEdgesFloat]:
-    """Filter edges from a networkx graph using the Pólya filter.
+    """Filter edges from a networkx graph using the Pólya-Urn filter.
 
     Parameters:
         g: networkx.Graph
@@ -357,7 +641,7 @@ def filter_ig_graph(
     a: float = 2,
     apt_lvl: int = 10,
 ) -> Tuple[NpArrayEdgesIds, NpArrayEdgesFloat]:
-    """Filter edges from a networkx graph using the Pólya filter.
+    """Filter edges from a networkx graph using the Pólya-Urn filter.
 
     Parameters:
         g: networkx.Graph

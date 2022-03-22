@@ -60,16 +60,73 @@ def test_integer_weights():
 
 def large_graph_for_testing(n):
     g = ig.Graph.Erdos_Renyi(int(n), 3 / n, directed=False)
-    g = g.components(mode="weak").giant()
+    g = g.components(mode="strong").giant()
     edges, _, num_vertices, opts = backend.ig_extract(g)
     return edges, num_vertices, opts
 
 
-@pytest.mark.parametrize("n", [(10e4), (10e3)])
-@pytest.mark.benchmark(group="Polya-Urn")
-def test_polya_int_weights_perf(benchmark, n):
+@pytest.mark.parametrize(
+    "n, optimization",
+    [
+        (1 * 10e2, "lru-py-nb"),
+        (1 * 10e2, "lru-nb"),
+        (1 * 10e2, "lru-nbf"),
+        (1 * 10e2, "lru-nb-szuszik"),
+    ],
+)
+def test_lru_int_polya(n, optimization):
+    wmax = 20
+    ne = 10
     edges, num_vertices, opts = large_graph_for_testing(n)
-    weights = np.random.randint(1, 40, len(edges)).astype(np.float64)
+    ne = len(edges)
+    weights = np.random.randint(2, wmax, ne).astype(np.float64)
+    assert np.mod(weights, 1).sum() == 0
+
+    r_lru = polya.scores_generic_graph(
+        **{
+            "num_vertices": num_vertices,
+            "edges": edges,
+            "weights": weights,
+            "is_directed": opts["is_directed"],
+            "optimization": optimization,
+        }
+    )
+    r = polya.scores_generic_graph(
+        **{
+            "num_vertices": num_vertices,
+            "edges": edges,
+            "weights": weights,
+            "is_directed": opts["is_directed"],
+            "optimization": "nb",
+        }
+    )
+    r1 = r.copy()
+    r1_lru = r_lru.copy()
+    r1[r > 0] = 1
+    r1_lru[r_lru > 0] = 1
+    assert np.allclose(r1, r1_lru)
+    assert np.allclose(r, r_lru)
+
+
+@pytest.mark.parametrize(
+    "n, wmax, optimization",
+    [
+        (1 * 10e5, 6, "lru-py-nb"),
+        (1 * 10e5, 6, "lru-nb"),
+        (1 * 10e5, 6, "lru-nbf"),
+        (1 * 10e5, 6, "lru-nb-szuszik"),
+        (1 * 10e5, 6, "nb"),
+        (1 * 10e5, 30, "lru-py-nb"),
+        (1 * 10e5, 30, "lru-nb"),
+        (1 * 10e5, 30, "lru-nbf"),
+        (1 * 10e5, 30, "lru-nb-szuszik"),
+        (1 * 10e5, 30, "nb"),
+    ],
+)
+@pytest.mark.benchmark(group="Polya-Urn: Int weights")
+def test_polya_int_weights_perf(benchmark, n, wmax, optimization):
+    edges, num_vertices, opts = large_graph_for_testing(n)
+    weights = np.random.randint(1, wmax, len(edges)).astype(np.float64)
     benchmark.extra_info["Num Edges"] = len(edges)
     benchmark.extra_info["Num_vertices"] = num_vertices
     assert np.mod(weights, 1).sum() == 0
@@ -80,13 +137,14 @@ def test_polya_int_weights_perf(benchmark, n):
             "edges": edges,
             "weights": weights,
             "is_directed": opts["is_directed"],
+            "optimization": optimization,
         },
     )
     assert np.all((result >= 0) & (result <= 1))
 
 
-@pytest.mark.parametrize("n", [(10e4), (10e3)])
-@pytest.mark.benchmark(group="Polya-Urn")
+@pytest.mark.parametrize("n", [(10e4), (5 * 10e4)])
+@pytest.mark.benchmark(group="Polya-Urn: Float Weights")
 def test_polya_float_weights_perf(benchmark, n):
     edges, num_vertices, opts = large_graph_for_testing(n)
     benchmark.extra_info["Num Edges"] = len(edges)

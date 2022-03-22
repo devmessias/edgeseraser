@@ -1,0 +1,570 @@
+{
+    "machine_info": {
+        "node": "ganexa",
+        "processor": "",
+        "machine": "x86_64",
+        "python_compiler": "GCC 10.2.1 20210110",
+        "python_implementation": "CPython",
+        "python_implementation_version": "3.9.2",
+        "python_version": "3.9.2",
+        "python_build": [
+            "default",
+            "Feb 28 2021 17:03:44"
+        ],
+        "release": "5.10.0-10-amd64",
+        "system": "Linux",
+        "cpu": {
+            "python_version": "3.9.2.final.0 (64 bit)",
+            "cpuinfo_version": [
+                8,
+                0,
+                0
+            ],
+            "cpuinfo_version_string": "8.0.0",
+            "arch": "X86_64",
+            "bits": 64,
+            "count": 8,
+            "arch_string_raw": "x86_64",
+            "vendor_id_raw": "GenuineIntel",
+            "brand_raw": "Intel(R) Core(TM) i7-3630QM CPU @ 2.40GHz",
+            "hz_advertised_friendly": "2.4000 GHz",
+            "hz_actual_friendly": "2.3588 GHz",
+            "hz_advertised": [
+                2400000000,
+                0
+            ],
+            "hz_actual": [
+                2358839000,
+                0
+            ],
+            "stepping": 9,
+            "model": 58,
+            "family": 6,
+            "flags": [
+                "acpi",
+                "aperfmperf",
+                "apic",
+                "arat",
+                "arch_perfmon",
+                "avx",
+                "bts",
+                "clflush",
+                "cmov",
+                "constant_tsc",
+                "cpuid",
+                "cpuid_fault",
+                "cx16",
+                "cx8",
+                "de",
+                "ds_cpl",
+                "dtes64",
+                "dtherm",
+                "dts",
+                "epb",
+                "ept",
+                "erms",
+                "est",
+                "f16c",
+                "flexpriority",
+                "fpu",
+                "fsgsbase",
+                "fxsr",
+                "ht",
+                "ida",
+                "lahf_lm",
+                "lm",
+                "mca",
+                "mce",
+                "mmx",
+                "monitor",
+                "msr",
+                "mtrr",
+                "nonstop_tsc",
+                "nopl",
+                "nx",
+                "osxsave",
+                "pae",
+                "pat",
+                "pbe",
+                "pcid",
+                "pclmulqdq",
+                "pdcm",
+                "pebs",
+                "pge",
+                "pln",
+                "pni",
+                "popcnt",
+                "pse",
+                "pse36",
+                "pti",
+                "pts",
+                "rdrand",
+                "rdrnd",
+                "rdtscp",
+                "rep_good",
+                "sep",
+                "smep",
+                "ss",
+                "sse",
+                "sse2",
+                "sse4_1",
+                "sse4_2",
+                "ssse3",
+                "syscall",
+                "tm",
+                "tm2",
+                "tpr_shadow",
+                "tsc",
+                "tsc_deadline_timer",
+                "tscdeadline",
+                "vme",
+                "vmx",
+                "vnmi",
+                "vpid",
+                "x2apic",
+                "xsave",
+                "xsaveopt",
+                "xtopology",
+                "xtpr"
+            ],
+            "l3_cache_size": 6291456,
+            "l2_cache_size": "1 MiB",
+            "l1_data_cache_size": "128 KiB",
+            "l1_instruction_cache_size": "128 KiB",
+            "l2_cache_line_size": 256,
+            "l2_cache_associativity": 6
+        }
+    },
+    "commit_info": {
+        "id": "90c814206851b0c754f34751bcaa0e4e297bac65",
+        "time": "2022-03-22T10:49:48-03:00",
+        "author_time": "2022-03-22T10:49:48-03:00",
+        "dirty": true,
+        "project": "edgeseraser",
+        "branch": "main"
+    },
+    "benchmarks": [
+        {
+            "group": "Polya-Urn: Int weights",
+            "name": "test_polya_int_weights_perf[100000.0-6-lru-py-nb]",
+            "fullname": "edgeseraser/tests/test_polya.py::test_polya_int_weights_perf[100000.0-6-lru-py-nb]",
+            "params": {
+                "n": 100000.0,
+                "wmax": 6,
+                "optimization": "lru-py-nb"
+            },
+            "param": "100000.0-6-lru-py-nb",
+            "extra_info": {
+                "Num Edges": 149486,
+                "Num_vertices": 93952
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 6.982989557996916,
+                "max": 6.982989557996916,
+                "mean": 6.982989557996916,
+                "stddev": 0,
+                "rounds": 1,
+                "median": 6.982989557996916,
+                "iqr": 0.0,
+                "q1": 6.982989557996916,
+                "q3": 6.982989557996916,
+                "iqr_outliers": 0,
+                "stddev_outliers": 0,
+                "outliers": "0;0",
+                "ld15iqr": 6.982989557996916,
+                "hd15iqr": 6.982989557996916,
+                "ops": 0.14320514039073717,
+                "total": 6.982989557996916,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "Polya-Urn: Int weights",
+            "name": "test_polya_int_weights_perf[100000.0-6-lru-nb]",
+            "fullname": "edgeseraser/tests/test_polya.py::test_polya_int_weights_perf[100000.0-6-lru-nb]",
+            "params": {
+                "n": 100000.0,
+                "wmax": 6,
+                "optimization": "lru-nb"
+            },
+            "param": "100000.0-6-lru-nb",
+            "extra_info": {
+                "Num Edges": 149379,
+                "Num_vertices": 94001
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 5.6757688889993005,
+                "max": 5.6757688889993005,
+                "mean": 5.6757688889993005,
+                "stddev": 0,
+                "rounds": 1,
+                "median": 5.6757688889993005,
+                "iqr": 0.0,
+                "q1": 5.6757688889993005,
+                "q3": 5.6757688889993005,
+                "iqr_outliers": 0,
+                "stddev_outliers": 0,
+                "outliers": "0;0",
+                "ld15iqr": 5.6757688889993005,
+                "hd15iqr": 5.6757688889993005,
+                "ops": 0.17618758260897244,
+                "total": 5.6757688889993005,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "Polya-Urn: Int weights",
+            "name": "test_polya_int_weights_perf[100000.0-6-lru-nbf]",
+            "fullname": "edgeseraser/tests/test_polya.py::test_polya_int_weights_perf[100000.0-6-lru-nbf]",
+            "params": {
+                "n": 100000.0,
+                "wmax": 6,
+                "optimization": "lru-nbf"
+            },
+            "param": "100000.0-6-lru-nbf",
+            "extra_info": {
+                "Num Edges": 149744,
+                "Num_vertices": 93908
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 2.0880342810014554,
+                "max": 2.0880342810014554,
+                "mean": 2.0880342810014554,
+                "stddev": 0,
+                "rounds": 1,
+                "median": 2.0880342810014554,
+                "iqr": 0.0,
+                "q1": 2.0880342810014554,
+                "q3": 2.0880342810014554,
+                "iqr_outliers": 0,
+                "stddev_outliers": 0,
+                "outliers": "0;0",
+                "ld15iqr": 2.0880342810014554,
+                "hd15iqr": 2.0880342810014554,
+                "ops": 0.47891934011753085,
+                "total": 2.0880342810014554,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "Polya-Urn: Int weights",
+            "name": "test_polya_int_weights_perf[100000.0-6-lru-nb-szuszik]",
+            "fullname": "edgeseraser/tests/test_polya.py::test_polya_int_weights_perf[100000.0-6-lru-nb-szuszik]",
+            "params": {
+                "n": 100000.0,
+                "wmax": 6,
+                "optimization": "lru-nb-szuszik"
+            },
+            "param": "100000.0-6-lru-nb-szuszik",
+            "extra_info": {
+                "Num Edges": 149436,
+                "Num_vertices": 94042
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 2.780906675998267,
+                "max": 2.780906675998267,
+                "mean": 2.780906675998267,
+                "stddev": 0,
+                "rounds": 1,
+                "median": 2.780906675998267,
+                "iqr": 0.0,
+                "q1": 2.780906675998267,
+                "q3": 2.780906675998267,
+                "iqr_outliers": 0,
+                "stddev_outliers": 0,
+                "outliers": "0;0",
+                "ld15iqr": 2.780906675998267,
+                "hd15iqr": 2.780906675998267,
+                "ops": 0.3595949510391348,
+                "total": 2.780906675998267,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "Polya-Urn: Int weights",
+            "name": "test_polya_int_weights_perf[100000.0-6-nb]",
+            "fullname": "edgeseraser/tests/test_polya.py::test_polya_int_weights_perf[100000.0-6-nb]",
+            "params": {
+                "n": 100000.0,
+                "wmax": 6,
+                "optimization": "nb"
+            },
+            "param": "100000.0-6-nb",
+            "extra_info": {
+                "Num Edges": 149071,
+                "Num_vertices": 93987
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 12.330533684998954,
+                "max": 12.330533684998954,
+                "mean": 12.330533684998954,
+                "stddev": 0,
+                "rounds": 1,
+                "median": 12.330533684998954,
+                "iqr": 0.0,
+                "q1": 12.330533684998954,
+                "q3": 12.330533684998954,
+                "iqr_outliers": 0,
+                "stddev_outliers": 0,
+                "outliers": "0;0",
+                "ld15iqr": 12.330533684998954,
+                "hd15iqr": 12.330533684998954,
+                "ops": 0.08109949054488835,
+                "total": 12.330533684998954,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "Polya-Urn: Int weights",
+            "name": "test_polya_int_weights_perf[100000.0-30-lru-py-nb]",
+            "fullname": "edgeseraser/tests/test_polya.py::test_polya_int_weights_perf[100000.0-30-lru-py-nb]",
+            "params": {
+                "n": 100000.0,
+                "wmax": 30,
+                "optimization": "lru-py-nb"
+            },
+            "param": "100000.0-30-lru-py-nb",
+            "extra_info": {
+                "Num Edges": 149949,
+                "Num_vertices": 94168
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 21.905795543003478,
+                "max": 21.905795543003478,
+                "mean": 21.905795543003478,
+                "stddev": 0,
+                "rounds": 1,
+                "median": 21.905795543003478,
+                "iqr": 0.0,
+                "q1": 21.905795543003478,
+                "q3": 21.905795543003478,
+                "iqr_outliers": 0,
+                "stddev_outliers": 0,
+                "outliers": "0;0",
+                "ld15iqr": 21.905795543003478,
+                "hd15iqr": 21.905795543003478,
+                "ops": 0.04565001978754391,
+                "total": 21.905795543003478,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "Polya-Urn: Int weights",
+            "name": "test_polya_int_weights_perf[100000.0-30-lru-nb]",
+            "fullname": "edgeseraser/tests/test_polya.py::test_polya_int_weights_perf[100000.0-30-lru-nb]",
+            "params": {
+                "n": 100000.0,
+                "wmax": 30,
+                "optimization": "lru-nb"
+            },
+            "param": "100000.0-30-lru-nb",
+            "extra_info": {
+                "Num Edges": 149166,
+                "Num_vertices": 94079
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.7016524950013263,
+                "max": 0.7016524950013263,
+                "mean": 0.7016524950013263,
+                "stddev": 0,
+                "rounds": 1,
+                "median": 0.7016524950013263,
+                "iqr": 0.0,
+                "q1": 0.7016524950013263,
+                "q3": 0.7016524950013263,
+                "iqr_outliers": 0,
+                "stddev_outliers": 0,
+                "outliers": "0;0",
+                "ld15iqr": 0.7016524950013263,
+                "hd15iqr": 0.7016524950013263,
+                "ops": 1.4252069323834011,
+                "total": 0.7016524950013263,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "Polya-Urn: Int weights",
+            "name": "test_polya_int_weights_perf[100000.0-30-lru-nbf]",
+            "fullname": "edgeseraser/tests/test_polya.py::test_polya_int_weights_perf[100000.0-30-lru-nbf]",
+            "params": {
+                "n": 100000.0,
+                "wmax": 30,
+                "optimization": "lru-nbf"
+            },
+            "param": "100000.0-30-lru-nbf",
+            "extra_info": {
+                "Num Edges": 148993,
+                "Num_vertices": 94067
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.9908605749988055,
+                "max": 0.9908605749988055,
+                "mean": 0.9908605749988055,
+                "stddev": 0,
+                "rounds": 1,
+                "median": 0.9908605749988055,
+                "iqr": 0.0,
+                "q1": 0.9908605749988055,
+                "q3": 0.9908605749988055,
+                "iqr_outliers": 0,
+                "stddev_outliers": 0,
+                "outliers": "0;0",
+                "ld15iqr": 0.9908605749988055,
+                "hd15iqr": 0.9908605749988055,
+                "ops": 1.009223724539858,
+                "total": 0.9908605749988055,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "Polya-Urn: Int weights",
+            "name": "test_polya_int_weights_perf[100000.0-30-lru-nb-szuszik]",
+            "fullname": "edgeseraser/tests/test_polya.py::test_polya_int_weights_perf[100000.0-30-lru-nb-szuszik]",
+            "params": {
+                "n": 100000.0,
+                "wmax": 30,
+                "optimization": "lru-nb-szuszik"
+            },
+            "param": "100000.0-30-lru-nb-szuszik",
+            "extra_info": {
+                "Num Edges": 149111,
+                "Num_vertices": 94128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.5074959390003642,
+                "max": 0.5074959390003642,
+                "mean": 0.5074959390003642,
+                "stddev": 0,
+                "rounds": 1,
+                "median": 0.5074959390003642,
+                "iqr": 0.0,
+                "q1": 0.5074959390003642,
+                "q3": 0.5074959390003642,
+                "iqr_outliers": 0,
+                "stddev_outliers": 0,
+                "outliers": "0;0",
+                "ld15iqr": 0.5074959390003642,
+                "hd15iqr": 0.5074959390003642,
+                "ops": 1.9704591173078971,
+                "total": 0.5074959390003642,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "Polya-Urn: Int weights",
+            "name": "test_polya_int_weights_perf[100000.0-30-nb]",
+            "fullname": "edgeseraser/tests/test_polya.py::test_polya_int_weights_perf[100000.0-30-nb]",
+            "params": {
+                "n": 100000.0,
+                "wmax": 30,
+                "optimization": "nb"
+            },
+            "param": "100000.0-30-nb",
+            "extra_info": {
+                "Num Edges": 150256,
+                "Num_vertices": 94216
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 19.037780287002533,
+                "max": 19.037780287002533,
+                "mean": 19.037780287002533,
+                "stddev": 0,
+                "rounds": 1,
+                "median": 19.037780287002533,
+                "iqr": 0.0,
+                "q1": 19.037780287002533,
+                "q3": 19.037780287002533,
+                "iqr_outliers": 0,
+                "stddev_outliers": 0,
+                "outliers": "0;0",
+                "ld15iqr": 19.037780287002533,
+                "hd15iqr": 19.037780287002533,
+                "ops": 0.052527132098625993,
+                "total": 19.037780287002533,
+                "iterations": 1
+            }
+        }
+    ],
+    "datetime": "2022-03-22T16:04:31.310571",
+    "version": "3.4.1"
+}
