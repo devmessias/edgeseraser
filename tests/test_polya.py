@@ -2,7 +2,7 @@ import igraph as ig
 import networkx as nx
 import numpy as np
 import pytest
-from edgeseraser import disparity, polya
+from edgeseraser import disparity, polya, polya_tools
 from edgeseraser.misc import backend
 
 
@@ -11,7 +11,7 @@ def test_pdf():
     n = 40
     k = 10.0
     a = 0.0
-    p = polya.compute_polya_pdf_approx(w, n, k, a)
+    p = polya_tools.statistics.compute_polya_pdf_approx(w, n, k, a)
     assert np.allclose(np.argsort(p), np.array([0, 1, 2, 3, 4]))
 
 
@@ -111,16 +111,16 @@ def test_lru_int_polya(n, optimization):
 @pytest.mark.parametrize(
     "n, wmax, optimization",
     [
-        (1 * 10e5, 6, "lru-py-nb"),
-        (1 * 10e5, 6, "lru-nb"),
-        (1 * 10e5, 6, "lru-nbf"),
-        (1 * 10e5, 6, "lru-nb-szuszik"),
-        (1 * 10e5, 6, "nb"),
-        (1 * 10e5, 30, "lru-py-nb"),
-        (1 * 10e5, 30, "lru-nb"),
-        (1 * 10e5, 30, "lru-nbf"),
-        (1 * 10e5, 30, "lru-nb-szuszik"),
-        (1 * 10e5, 30, "nb"),
+        (1 * 10e3, 6, "lru-py-nb"),
+        (1 * 10e3, 6, "lru-nb"),
+        (1 * 10e3, 6, "lru-nbf"),
+        (1 * 10e3, 6, "lru-nb-szuszik"),
+        (1 * 10e3, 6, "nb"),
+        (1 * 10e3, 30, "lru-py-nb"),
+        (1 * 10e3, 30, "lru-nb"),
+        (1 * 10e3, 30, "lru-nbf"),
+        (1 * 10e3, 30, "lru-nb-szuszik"),
+        (1 * 10e3, 30, "nb"),
     ],
 )
 @pytest.mark.benchmark(group="Polya-Urn: Int weights")

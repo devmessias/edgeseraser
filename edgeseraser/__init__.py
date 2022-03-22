@@ -35,7 +35,6 @@ g # filtered graph
 [Disparity]: https://devmessias.github.io/edgeseraser/api_docs/#edgeseraser.disparity
 [Pólya-Urn]: https://devmessias.github.io/edgeseraser/api_docs/#edgeseraser.polya
 """
-
 __author__ = """Bruno Messias"""
 __email__ = "devmessias@gmail.com"
 __version__ = "0.5.0"

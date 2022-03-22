@@ -74,6 +74,7 @@ src_paths = ["src", "tests"]
 [tool.black]
 target-version = ["py37", "py38", "py39"]
 include = '\.pyi?$'
+exclude = '__init__.py'
 
 
 [tool.mypy]
