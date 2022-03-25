@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 
 ## [Unreleased]
+
+## [0.6.0] - 2022-03-25
 ### Added
 - Static type analysis
   - stubs for networkx, igraph and scipy csr_matrix
@@ -16,20 +18,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   - This gave a significant speedup for the Pólya-Urn method, approx 80x compared to   numba python-lru version.
 
 ### Fixed
-
 - Pólya-Urn performance issues
 - Pólya-Urn docstrings
+
 ### Changed
--   Args for Pólya-Urn method
--   Makefile targets:
+- Args for Pólya-Urn method
+- Makefile targets:
     -   make tests -> make pytests
         -   skip all the benchmarks tests
     -   make benchmark name="{BENCHMARK_NAME}"
         -   run the benchmarks
     - github actions now uses the makefile for tests
--   Return types for all graph filter methods
--   Pólya-Urn code organization
--   Disable mypy for while until it is fixed
+- Return types for all graph filter methods
+- Pólya-Urn code organization
+- Disable mypy for while until it is fixed
+
 ## [0.5.0] - 2022-03-15
 ### Added
 - Pólya-Urn method for integer weighted graphs now uses JIT compilation to
@@ -84,7 +87,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Disparity filter
 - Networkx integration
 
-[Unreleased]: https://github.com/devmessias/edgeseraser/compare/0.5.0...master
+[Unreleased]: https://github.com/devmessias/edgeseraser/compare/0.6.0...master
+[0.6.0]: https://github.com/devmessias/edgeseraser/compare/0.5.0...0.6.0
 [0.5.0]: https://github.com/devmessias/edgeseraser/compare/0.4.1...0.5.0
 [0.4.1]: https://github.com/devmessias/edgeseraser/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/devmessias/edgeseraser/compare/0.3.0...0.4.0
