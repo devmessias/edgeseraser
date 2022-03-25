@@ -141,9 +141,9 @@ def integer_cdf_nb(
             edge weighted degrees
         degree: np.array
             vertex degrees
-        a: float
         weights: np.array
             edge weights
+        a: float
     Returns:
         np.array:
             Probability values for each edge with integer weights
@@ -179,9 +179,9 @@ def integer_cdf_lru_nb(
             edge weighted degrees
         degree: np.array
             vertex degrees
-        a: float
         weights: np.array
             edge weights
+        a: float
     Returns:
         np.array:
             Probability values for each edge with integer weights
@@ -215,9 +215,10 @@ def integer_cdf_lru_nb_f(
             edge weighted degrees
         degree: np.array
             vertex degrees
-        a: float
         weights: np.array
-            edge weights
+        edge weights
+        a: float
+        cache_obj: object
     Returns:
         np.array:
             Probability values for each edge with integer weights

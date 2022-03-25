@@ -1,4 +1,11 @@
+import sys
 import warnings
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+
 from typing import Optional, Tuple, Union
 
 import igraph as ig
@@ -17,6 +24,8 @@ from scipy.sparse import csr_matrix
 
 warnings.simplefilter("ignore", FutureWarning)
 
+OptionsForCache = Literal["lru-nb", "lru-nb-szuszik", "lru-nbf", "lru-py-nb", "nb"]
+
 
 def scores_generic_graph(
     num_vertices: int,
@@ -26,7 +35,7 @@ def scores_generic_graph(
     apt_lvl: int = 10,
     is_directed: bool = False,
     eps: float = 1e-20,
-    optimization="lru-nb",
+    optimization: OptionsForCache = "lru-nb-szuszik",
 ) -> NpArrayEdgesFloat:
     """Compute the probability for each edge using the Pólya-based method for
     a generic weighted graph.
@@ -42,6 +51,8 @@ def scores_generic_graph(
         apt_lvl: int
         is_directed: bool
         eps: float
+        optimization: OptionsForCache
+
     Returns:
         np.array:
             edge scores. Probability values
@@ -120,6 +131,7 @@ def filter_generic_graph(
     apt_lvl: int = 10,
     is_directed: bool = False,
     eps: float = 1e-20,
+    optimization: OptionsForCache = "lru-nb-szuszik",
 ) -> Tuple[NpArrayEdgesIds, NpArrayEdgesFloat]:
     """Filter the graph using the Pólya-based method.
 
@@ -150,6 +162,7 @@ def filter_generic_graph(
         apt_lvl=apt_lvl,
         is_directed=is_directed,
         eps=eps,
+        optimization=optimization,
     )
 
     ids2erase = cond_edges2erase(p, thresh=thresh)
@@ -164,6 +177,7 @@ def filter_nx_graph(
     apt_lvl: int = 10,
     remap_labels: bool = False,
     save_scores: bool = False,
+    optimization: OptionsForCache = "lru-nb-szuszik",
 ) -> Tuple[NpArrayEdgesIds, NpArrayEdgesFloat]:
     """Filter edges from a networkx graph using the Pólya-Urn filter.
 
@@ -171,6 +185,7 @@ def filter_nx_graph(
         g: networkx.Graph
             graph to be filtered
         thresh: float
+        field: str
         a: float
             0 is the Binomial distribution,
             1 the filter will behave like the Disparity filter.
@@ -196,6 +211,7 @@ def filter_nx_graph(
         a=a,
         apt_lvl=apt_lvl,
         thresh=thresh,
+        optimization=optimization,
     )
     if save_scores:
         nx.set_edge_attributes(
@@ -216,13 +232,15 @@ def filter_ig_graph(
     field: Optional[str] = None,
     a: float = 2,
     apt_lvl: int = 10,
+    optimization: OptionsForCache = "lru-nb-szuszik",
 ) -> Tuple[NpArrayEdgesIds, NpArrayEdgesFloat]:
-    """Filter edges from a networkx graph using the Pólya-Urn filter.
+    """Filter edges from a igraph using the Pólya-Urn filter.
 
     Parameters:
-        g: networkx.Graph
+        g: ig.Graph
             graph to be filtered
         thresh: float
+        field: str
         a: float
             0 is the Binomial distribution,
             1 the filter will behave like the Disparity filter.
@@ -244,6 +262,7 @@ def filter_ig_graph(
         a=a,
         apt_lvl=apt_lvl,
         thresh=thresh,
+        optimization=optimization,
     )
     ig_erase(g, ids2erase)
     return ids2erase, probs

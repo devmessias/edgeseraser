@@ -1,5 +1,11 @@
+import sys
 import warnings
 from functools import lru_cache
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
 
 import numpy as np
 import scipy.stats as stats
@@ -112,17 +118,19 @@ def polya_cdf(
     apt_lvl: float,
     eps: float = 1e-20,
     check_consistency: bool = False,
-    optimization="lru-nb",
+    optimization: Literal[
+        "lru-nb", "lru-nb-szuszik", "lru-nbf", "lru-py-nb", "nb"
+    ] = "lru-nb",
     cache_obj=None,
 ) -> NpArrayEdgesFloat:
     """
     Args:
-        weights: np.array
-            edge weights
         wdegree: np.array
             edge weighted degrees
         degree: np.array
             vertex degrees
+        weights: np.array
+            edge weights
         a: float
         apt_lvl: int
         eps: float
